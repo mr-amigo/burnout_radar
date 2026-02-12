@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Mindful Planner MVP</title>
+    <style>
+        body {
+            background-color: #9c004b;
+            color: white;
+            font-family: sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+        }
+
+        .card {
+            background: #5a002d;
+            padding: 20px;
+            border-radius: 15px;
+        }
+
+        .task-card {
+            background: #3d001e;
+            margin-bottom: 10px;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 5px solid #ff4444;
+        }
+
+        .index-circle {
+            width: 100px;
+            height: 100px;
+            border: 8px solid #ff4444;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin: 0 auto;
+        }
+
+        .alert {
+            background: #4a007d;
+            padding: 15px;
+            border-radius: 15px;
+            grid-column: span 3;
+            margin-top: 20px;
+        }
+
+        .btn {
+            background: #ff4488;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <h2>MindfulPlanner</h2>
+        <div>Dashboard | Planner | Analytics</div>
+    </div>
+
+    <div class="grid">
+        <!-- Блок Індексу -->
+        <div class="card">
+            <h3>Burnout Index</h3>
+            <div class="index-circle">{{ burnout_index }}</div>
+            <p align="center">Moderate</p>
+        </div>
+
+        <!-- Блок Прогресу -->
+        <div class="card">
+            <h3>Today's Progress</h3>
+            <h1 style="font-size: 48px;">2/5</h1>
+            <p>tasks completed</p>
+        </div>
+
+        <!-- Блок Статусу -->
+        <div class="card">
+            <h3>Today's Status</h3>
+            <p>Mood: {{ mood }}</p>
+            <p>Energy: {{ energy }}</p>
+        </div>
+
+        <!-- Список Задач -->
+        <div class="card" style="grid-column: span 2;">
+            <div style="display: flex; justify-content: space-between;">
+                <h3>Today's Tasks</h3>
+                <button class="btn">+ Add Task</button>
+            </div>
+            {% for task in tasks %}
+            <div class="task-card">
+                <strong>{{ task.title }}</strong><br>
+                <small>Priority: {{ task.priority }} | Difficulty: {{ task.difficulty }}</small>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Чекап -->
+        <div class="card">
+            <h3>Daily Check-in</h3>
+            <button class="btn" style="width: 100%; margin-bottom: 5px;">Log Mood</button>
+            <button class="btn" style="width: 100%; margin-bottom: 5px;">Rate Energy</button>
+            <button class="btn" style="width: 100%;">Write Reflection</button>
+        </div>
+    </div>
+
+    <div class="alert">
+        <strong>Smart Alert:</strong> You've had 3 intense days in a row. Consider taking breaks.
+    </div>
+</body>
+
+</html>
