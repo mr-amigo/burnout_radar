@@ -1,0 +1,110 @@
+# ========================
+# OS файли
+# ========================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# ========================
+# Редактори та IDE
+# ========================
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*.sublime-project
+*.sublime-workspace
+
+# ========================
+# Логи та тимчасові файли
+# ========================
+*.log
+*.tmp
+*.temp
+*.bak
+*.cache
+
+# ========================
+# Node.js
+# ========================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.npm
+.yarn-integrity
+dist/
+build/
+
+# ========================
+# Python
+# ========================
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+dist/
+build/
+.env
+.venv
+venv/
+env/
+*.pyc
+
+# ========================
+# Java
+# ========================
+*.class
+*.jar
+*.war
+*.ear
+target/
+
+# ========================
+# .NET / C#
+# ========================
+bin/
+obj/
+*.user
+*.suo
+
+# ========================
+# Змінні середовища та секрети
+# ========================
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+secrets.json
+config.local.*
+
+# ========================
+# Тести та покриття
+# ========================
+coverage/
+.nyc_output/
+*.lcov
+.pytest_cache/
+
+# ========================
+# Docker
+# ========================
+docker-compose.override.yml
+
+# ========================
+# Різне
+# ========================
+*.zip
+*.tar.gz
+*.rar
