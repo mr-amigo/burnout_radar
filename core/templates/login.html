@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="uk">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BurnoutRadar — Вхід</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0f0a1a;
+      --surface: #1a1028;
+      --surface2: #231535;
+      --surface3: #2d1c42;
+      --accent: #e8327c;
+      --accent2: #c026d3;
+      --text: #f0e8ff;
+      --text2: #b8a8d4;
+      --text3: #7a6a9a;
+      --border: rgba(255, 255, 255, 0.07);
+      --glow: rgba(232, 50, 124, 0.2);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 70% 50% at 85% 5%, rgba(192, 38, 211, 0.18) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 60% at 5% 90%, rgba(232, 50, 124, 0.14) 0%, transparent 60%);
+      pointer-events: none;
+      z-index: 0;
+      animation: bgPulse 8s ease-in-out infinite alternate;
+    }
+
+    @keyframes bgPulse {
+      from {
+        opacity: 0.8;
+      }
+
+      to {
+        opacity: 1;
+      }
+    }
+
+    .particles {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+
+    .particle {
+      position: absolute;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(232, 50, 124, 0.4), transparent);
+      animation: float linear infinite;
+    }
+
+    @keyframes float {
+      0% {
+        transform: translateY(100vh) scale(0);
+        opacity: 0;
+      }
+
+      10% {
+        opacity: 1;
+      }
+
+      90% {
+        opacity: 0.3;
+      }
+
+      100% {
+        transform: translateY(-100px) scale(1);
+        opacity: 0;
+      }
+    }
+
+    .card-wrap {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 500px;
+      padding: 20px;
+    }
+
+    .step-card {
+      background: rgba(26, 16, 40, 0.9);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 40px;
+      backdrop-filter: blur(20px);
+      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.03);
+      animation: cardIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    @keyframes cardIn {
+      from {
+        opacity: 0;
+        transform: translateY(24px) scale(0.97);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 32px;
+    }
+
+    .logo-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      box-shadow: 0 0 30px var(--glow);
+      animation: logoPulse 3s ease-in-out infinite;
+    }
+
+    @keyframes logoPulse {
+
+      0%,
+      100% {
+        box-shadow: 0 0 20px var(--glow);
+      }
+
+      50% {
+        box-shadow: 0 0 40px rgba(232, 50, 124, 0.4);
+      }
+    }
+
+    .logo-text {
+      font-family: 'DM Serif Display', serif;
+      font-size: 20px;
+    }
+
+    .logo-sub {
+      font-size: 11px;
+      color: var(--text3);
+      margin-top: 1px;
+    }
+
+    .welcome-hero {
+      text-align: center;
+      padding: 20px 0;
+    }
+
+    .welcome-icon {
+      width: 80px;
+      height: 80px;
+      border-radius: 24px;
+      margin: 0 auto 24px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 36px;
+      box-shadow: 0 0 60px rgba(232, 50, 124, 0.3);
+      animation: logoPulse 3s ease-in-out infinite;
+    }
+
+    .welcome-hero h1 {
+      font-family: 'DM Serif Display', serif;
+      font-size: 32px;
+      margin-bottom: 8px;
+    }
+
+    .welcome-hero p {
+      font-size: 14px;
+      color: var(--text3);
+      line-height: 1.6;
+      margin-bottom: 32px;
+    }
+
+    .features {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 28px;
+      text-align: left;
+    }
+
+    .feature {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      border-radius: 10px;
+      background: var(--surface2);
+    }
+
+    .feature-icon {
+      font-size: 18px;
+    }
+
+    .feature-text {
+      font-size: 13px;
+      color: var(--text2);
+    }
+
+    /* LOGIN FORM */
+    .login-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: 26px;
+      margin-bottom: 6px;
+    }
+
+    .login-sub {
+      font-size: 13px;
+      color: var(--text3);
+      margin-bottom: 28px;
+      line-height: 1.5;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text3);
+      margin-bottom: 8px;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 14px 16px;
+      border-radius: 12px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      outline: none;
+      transition: all 0.25s;
+    }
+
+    .form-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(232, 50, 124, 0.1);
+    }
+
+    .form-input::placeholder {
+      color: var(--text3);
+    }
+
+    .btn-primary {
+      width: 100%;
+      padding: 15px;
+      border-radius: 12px;
+      border: none;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff;
+      font-size: 15px;
+      font-weight: 600;
+      font-family: 'DM Sans', sans-serif;
+      cursor: pointer;
+      transition: all 0.25s;
+      margin-top: 8px;
+      box-shadow: 0 8px 25px rgba(232, 50, 124, 0.35);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 12px 35px rgba(232, 50, 124, 0.45);
+    }
+
+    .btn-primary:active {
+      transform: translateY(0);
+    }
+
+    .error-box {
+      background: rgba(232, 50, 124, 0.1);
+      border: 1px solid rgba(232, 50, 124, 0.3);
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-size: 13px;
+      color: var(--accent);
+      margin-bottom: 16px;
+    }
+
+    .switch-link {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 13px;
+      color: var(--text3);
+    }
+
+    .switch-link a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .switch-link a:hover {
+      text-decoration: underline;
+    }
+
+    .tab-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 28px;
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      color: var(--text3);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .tab-btn.active {
+      background: rgba(232, 50, 124, 0.15);
+      border-color: var(--accent);
+      color: var(--text);
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="particles" id="particles"></div>
+
+  <div class="card-wrap">
+
+    <!-- WELCOME SCREEN (показується якщо не авторизований) -->
+    <div class="step-card" id="welcomeScreen">
+      <div class="logo">
+        <div class="logo-icon">📡</div>
+        <div>
+          <div class="logo-text">BurnoutRadar</div>
+          <div class="logo-sub">Smart burnout prevention</div>
+        </div>
+      </div>
+      <div class="welcome-hero">
+        <div class="welcome-icon">📡</div>
+        <h1>Detect Burnout<br><em style="font-style:italic;color:var(--accent)">Before It Hits</em></h1>
+        <p>Your personal wellness tracker that monitors energy, mood, and workload to keep you at your best.</p>
+      </div>
+      <div class="features">
+        <div class="feature"><span class="feature-icon">🎯</span><span class="feature-text">Smart task planning with
+            burnout prediction</span></div>
+        <div class="feature"><span class="feature-icon">💙</span><span class="feature-text">Daily mood & energy tracking
+            with AI insights</span></div>
+        <div class="feature"><span class="feature-icon">📊</span><span class="feature-text">Analytics dashboard to spot
+            your patterns</span></div>
+      </div>
+      <button class="btn-primary" onclick="showAuth()">Get Started →</button>
+    </div>
+
+    <!-- AUTH FORM (login / register tabs) -->
+    <div class="step-card" id="authScreen" style="display:none;">
+      <div class="logo">
+        <div class="logo-icon">📡</div>
+        <div>
+          <div class="logo-text">BurnoutRadar</div>
+          <div class="logo-sub">Smart burnout prevention</div>
+        </div>
+      </div>
+
+      <div class="tab-row">
+        <button class="tab-btn active" id="tabLogin" onclick="switchTab('login')">Sign In</button>
+        <button class="tab-btn" id="tabRegister" onclick="switchTab('register')">Create Account</button>
+      </div>
+
+      <!-- Django повідомлення про помилки -->
+      {% if form.errors %}
+      <div class="error-box">
+        {% for field in form %}
+        {% for error in field.errors %}{{ error }}{% endfor %}
+        {% endfor %}
+        {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+      </div>
+      {% endif %}
+
+      <!-- LOGIN -->
+      <div id="loginForm">
+        <div class="login-title">Welcome back 👋</div>
+        <div class="login-sub">Sign in to your BurnoutRadar account.</div>
+        <form method="post" action="{% url 'login' %}">
+          {% csrf_token %}
+          <input type="hidden" name="form_type" value="login">
+          <div class="form-group">
+            <label class="form-label">Username</label>
+            <input class="form-input" type="text" name="username" placeholder="Your username" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Password</label>
+            <input class="form-input" type="password" name="password" placeholder="••••••••" required>
+          </div>
+          <button type="submit" class="btn-primary">Sign In →</button>
+        </form>
+      </div>
+
+      <!-- REGISTER -->
+      <div id="registerForm" style="display:none;">
+        <div class="login-title">Nice to meet you! 👋</div>
+        <div class="login-sub">Create your BurnoutRadar account.</div>
+        <form method="post" action="{% url 'register' %}">
+          {% csrf_token %}
+          <div class="form-group">
+            <label class="form-label">Username</label>
+            <input class="form-input" type="text" name="username" placeholder="Choose a username" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Email</label>
+            <input class="form-input" type="email" name="email" placeholder="your@email.com" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Password</label>
+            <input class="form-input" type="password" name="password1" placeholder="Min 8 characters" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Confirm Password</label>
+            <input class="form-input" type="password" name="password2" placeholder="Repeat password" required>
+          </div>
+          <button type="submit" class="btn-primary">Create Account →</button>
+        </form>
+      </div>
+
+    </div>
+
+  </div>
+
+  <script>
+    // Particles
+    const pc = document.getElementById('particles');
+    for (let i = 0; i < 12; i++) {
+      const p = document.createElement('div'); p.className = 'particle';
+      const s = Math.random() * 60 + 20;
+      p.style.cssText = `width:${s}px;height:${s}px;left:${Math.random() * 100}%;animation-duration:${Math.random() * 15 + 10}s;animation-delay:-${Math.random() * 15}s;opacity:${Math.random() * 0.3 + 0.1}`;
+      pc.appendChild(p);
+    }
+
+    function showAuth() {
+      document.getElementById('welcomeScreen').style.display = 'none';
+      document.getElementById('authScreen').style.display = 'block';
+    }
+
+    function switchTab(tab) {
+      if (tab === 'login') {
+        document.getElementById('loginForm').style.display = 'block';
+        document.getElementById('registerForm').style.display = 'none';
+        document.getElementById('tabLogin').classList.add('active');
+        document.getElementById('tabRegister').classList.remove('active');
+      } else {
+        document.getElementById('loginForm').style.display = 'none';
+        document.getElementById('registerForm').style.display = 'block';
+        document.getElementById('tabLogin').classList.remove('active');
+        document.getElementById('tabRegister').classList.add('active');
+      }
+    }
+
+    // Якщо є помилки — одразу показати форму
+    {% if form.errors %}
+    showAuth();
+    {% endif %}
+  </script>
+</body>
+
+</html>

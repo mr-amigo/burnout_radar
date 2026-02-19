@@ -1,129 +1,2623 @@
 <!DOCTYPE html>
-<html>
+<html lang="uk">
 
 <head>
-    <title>Mindful Planner MVP</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BurnoutRadar — Smart productivity + wellness</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap"
+        rel="stylesheet">
     <style>
-        body {
-            background-color: #713c56;
-            color: white;
-            font-family: sans-serif;
+        :root {
+            --bg: #0f0a1a;
+            --surface: #1a1028;
+            --surface2: #231535;
+            --surface3: #2d1c42;
+            --accent: #e8327c;
+            --accent2: #c026d3;
+            --accent3: #f59e0b;
+            --text: #f0e8ff;
+            --text2: #b8a8d4;
+            --text3: #7a6a9a;
+            --high: #e8327c;
+            --medium: #f59e0b;
+            --low: #34d399;
+            --border: rgba(255, 255, 255, 0.07);
+            --glow: rgba(232, 50, 124, 0.15);
+        }
+
+        * {
             margin: 0;
-            padding: 20px;
+            padding: 0;
+            box-sizing: border-box;
         }
 
-        .header {
+        html,
+        body {
+            height: 100%;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* BG decoration */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background:
+                radial-gradient(ellipse 60% 40% at 80% 10%, rgba(192, 38, 211, 0.12) 0%, transparent 70%),
+                radial-gradient(ellipse 50% 50% at 10% 80%, rgba(232, 50, 124, 0.1) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* LAYOUT */
+        .app {
             display: flex;
-            justify-content: space-between;
+            flex-direction: column;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* HEADER */
+        header {
+            display: flex;
             align-items: center;
-            margin-bottom: 30px;
+            justify-content: space-between;
+            padding: 16px 28px;
+            background: rgba(26, 16, 40, 0.85);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
 
-        .grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 20px;
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
-        .card {
-            background: #5a002d;
-            padding: 20px;
-            border-radius: 15px;
-        }
-
-        .task-card {
-            background: #3d001e;
-            margin-bottom: 10px;
-            padding: 15px;
+        .logo-icon {
+            width: 34px;
+            height: 34px;
             border-radius: 10px;
-            border-left: 5px solid #ff4444;
-        }
-
-        .index-circle {
-            width: 100px;
-            height: 100px;
-            border: 8px solid #ff4444;
-            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 24px;
-            margin: 0 auto;
+            font-size: 16px;
+            box-shadow: 0 0 20px var(--glow);
         }
 
-        .alert {
-            background: #4a007d;
-            padding: 15px;
-            border-radius: 15px;
-            grid-column: span 3;
+        .logo-text {
+            font-family: 'DM Serif Display', serif;
+            font-size: 18px;
+        }
+
+        .logo-sub {
+            font-size: 11px;
+            color: var(--text3);
+            margin-top: -2px;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .avatar {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent2), var(--accent));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .bell-btn {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 15px;
+            transition: background 0.2s;
+        }
+
+        .bell-btn:hover {
+            background: var(--surface3);
+        }
+
+        /* NAV */
+        nav {
+            display: flex;
+            gap: 4px;
+            padding: 12px 28px 0;
+            border-bottom: 1px solid var(--border);
+            overflow-x: auto;
+        }
+
+        nav::-webkit-scrollbar {
+            display: none;
+        }
+
+        .nav-btn {
+            padding: 8px 18px;
+            border: none;
+            background: none;
+            color: var(--text3);
+            cursor: pointer;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 14px;
+            font-weight: 500;
+            border-radius: 8px 8px 0 0;
+            transition: all 0.2s;
+            white-space: nowrap;
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .nav-btn:hover {
+            color: var(--text2);
+            background: var(--surface2);
+        }
+
+        .nav-btn.active {
+            color: var(--text);
+            background: linear-gradient(180deg, var(--surface2) 0%, var(--surface) 100%);
+        }
+
+        .nav-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent), var(--accent2));
+        }
+
+        /* MAIN */
+        main {
+            flex: 1;
+            padding: 24px 28px;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* PAGES */
+        .page {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* CARDS */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px;
+            transition: border-color 0.2s;
+        }
+
+        .card:hover {
+            border-color: rgba(255, 255, 255, 0.12);
+        }
+
+        .card-title {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            color: var(--text3);
+            margin-bottom: 12px;
+        }
+
+        /* GRID */
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        @media(max-width:768px) {
+
+            .grid-3,
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+
+            main {
+                padding: 16px;
+            }
+
+            nav {
+                padding: 12px 16px 0;
+            }
+
+            header {
+                padding: 12px 16px;
+            }
+        }
+
+        /* BURNOUT INDEX CARD */
+        .burnout-ring {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 0;
+        }
+
+        .ring-wrap {
+            position: relative;
+            width: 100px;
+            height: 100px;
+            margin-bottom: 8px;
+        }
+
+        .ring-wrap svg {
+            transform: rotate(-90deg);
+        }
+
+        .ring-bg {
+            fill: none;
+            stroke: var(--surface3);
+            stroke-width: 8;
+        }
+
+        .ring-fill {
+            fill: none;
+            stroke-width: 8;
+            stroke-linecap: round;
+            transition: stroke-dashoffset 1s ease;
+        }
+
+        .ring-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+
+        .ring-num {
+            font-family: 'DM Serif Display', serif;
+            font-size: 28px;
+            line-height: 1;
+        }
+
+        .ring-label {
+            font-size: 9px;
+            color: var(--text3);
+            margin-top: 2px;
+        }
+
+        .burnout-status {
+            font-size: 12px;
+            font-weight: 600;
+            padding: 3px 12px;
+            border-radius: 20px;
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--accent3);
+        }
+
+        /* PROGRESS CARD */
+        .progress-big {
+            font-family: 'DM Serif Display', serif;
+            font-size: 48px;
+            line-height: 1;
+            margin: 8px 0;
+        }
+
+        .progress-bar-wrap {
+            background: var(--surface3);
+            border-radius: 4px;
+            height: 6px;
+            margin-top: 12px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            border-radius: 4px;
+            background: linear-gradient(90deg, var(--accent), var(--accent2));
+            transition: width 0.8s ease;
+        }
+
+        /* STATUS CARD */
+        .status-rows {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .status-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .status-row label {
+            font-size: 13px;
+            color: var(--text2);
+        }
+
+        .dots {
+            display: flex;
+            gap: 4px;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--surface3);
+        }
+
+        .dot.filled {
+            background: var(--accent);
+            box-shadow: 0 0 6px var(--accent);
+        }
+
+        /* SMART ALERT */
+        .alert-card {
+            background: linear-gradient(135deg, rgba(232, 50, 124, 0.12), rgba(192, 38, 211, 0.08));
+            border: 1px solid rgba(232, 50, 124, 0.25);
+        }
+
+        .alert-icon {
+            font-size: 20px;
+            margin-bottom: 8px;
+        }
+
+        .alert-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--accent);
+            margin-bottom: 6px;
+        }
+
+        .alert-text {
+            font-size: 13px;
+            color: var(--text2);
+            line-height: 1.5;
+        }
+
+        /* TASK LIST */
+        .tasks-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .tasks-title {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .btn-add {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            color: #fff;
+            font-size: 13px;
+            font-weight: 600;
+            font-family: 'DM Sans', sans-serif;
+            transition: opacity 0.2s;
+            box-shadow: 0 4px 15px rgba(232, 50, 124, 0.3);
+        }
+
+        .btn-add:hover {
+            opacity: 0.85;
+        }
+
+        .task-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 14px 0;
+            border-bottom: 1px solid var(--border);
+            transition: all 0.2s;
+        }
+
+        .task-item:last-child {
+            border-bottom: none;
+        }
+
+        .task-check {
+            width: 20px;
+            height: 20px;
+            border-radius: 6px;
+            border: 2px solid var(--surface3);
+            cursor: pointer;
+            flex-shrink: 0;
+            margin-top: 2px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            background: transparent;
+        }
+
+        .task-check.done {
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+
+        .task-check.done::after {
+            content: '✓';
+            font-size: 11px;
+            color: #fff;
+        }
+
+        .task-info {
+            flex: 1;
+        }
+
+        .task-name {
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 6px;
+            transition: all 0.2s;
+        }
+
+        .task-name.done {
+            text-decoration: line-through;
+            color: var(--text3);
+        }
+
+        .task-tags {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .tag {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 6px;
+        }
+
+        .tag.high {
+            background: rgba(232, 50, 124, 0.15);
+            color: var(--high);
+        }
+
+        .tag.medium {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--medium);
+        }
+
+        .tag.low {
+            background: rgba(52, 211, 153, 0.15);
+            color: var(--low);
+        }
+
+        .tag.diff {
+            background: var(--surface3);
+            color: var(--text2);
+        }
+
+        .task-del {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--text3);
+            font-size: 16px;
+            padding: 2px 4px;
+            transition: color 0.2s;
+        }
+
+        .task-del:hover {
+            color: var(--accent);
+        }
+
+        /* MODAL */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(6px);
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.open {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 28px;
+            width: 100%;
+            max-width: 440px;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(20px);
+                opacity: 0
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1
+            }
+        }
+
+        .modal h3 {
+            font-family: 'DM Serif Display', serif;
+            font-size: 22px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--text3);
+            margin-bottom: 8px;
+        }
+
+        .form-input,
+        .form-select,
+        .form-textarea {
+            width: 100%;
+            padding: 12px 14px;
+            border-radius: 10px;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .form-input:focus,
+        .form-select:focus,
+        .form-textarea:focus {
+            border-color: var(--accent);
+        }
+
+        .form-select {
+            cursor: pointer;
+        }
+
+        .form-select option {
+            background: var(--surface2);
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .modal-btns {
+            display: flex;
+            gap: 10px;
             margin-top: 20px;
         }
 
-        .btn {
-            background: #ed7ba5;
-            color: white;
-            border: none;
-            padding: 10px;
-            border-radius: 5px;
+        .btn-cancel {
+            flex: 1;
+            padding: 12px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: none;
+            color: var(--text2);
             cursor: pointer;
+            font-size: 14px;
+            font-family: 'DM Sans', sans-serif;
+            transition: all 0.2s;
+        }
+
+        .btn-cancel:hover {
+            background: var(--surface2);
+        }
+
+        .btn-save {
+            flex: 1;
+            padding: 12px;
+            border-radius: 10px;
+            border: none;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            color: #fff;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            font-family: 'DM Sans', sans-serif;
+            transition: opacity 0.2s;
+            box-shadow: 0 4px 15px rgba(232, 50, 124, 0.3);
+        }
+
+        .btn-save:hover {
+            opacity: 0.85;
+        }
+
+        /* DAILY PLANNER */
+        .planner-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .planner-date h2 {
+            font-family: 'DM Serif Display', serif;
+            font-size: 28px;
+        }
+
+        .planner-date p {
+            font-size: 13px;
+            color: var(--text3);
+            margin-top: 2px;
+        }
+
+        .planner-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-outline {
+            padding: 8px 16px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: none;
+            color: var(--text2);
+            cursor: pointer;
+            font-size: 13px;
+            font-family: 'DM Sans', sans-serif;
+            transition: all 0.2s;
+        }
+
+        .btn-outline:hover {
+            background: var(--surface2);
+            color: var(--text);
+        }
+
+        .planner-layout {
+            display: grid;
+            grid-template-columns: 1fr 320px;
+            gap: 20px;
+        }
+
+        @media(max-width:900px) {
+            .planner-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .schedule-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .schedule-item {
+            display: flex;
+            gap: 14px;
+            padding: 16px;
+            border-radius: 14px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            transition: all 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .schedule-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+        }
+
+        .schedule-item.high::before {
+            background: var(--high);
+        }
+
+        .schedule-item.medium::before {
+            background: var(--medium);
+        }
+
+        .schedule-item.low::before {
+            background: var(--low);
+        }
+
+        .schedule-item:hover {
+            border-color: rgba(255, 255, 255, 0.12);
+            transform: translateX(2px);
+        }
+
+        .schedule-time {
+            font-size: 12px;
+            color: var(--text3);
+            white-space: nowrap;
+            margin-top: 2px;
+            width: 70px;
+            flex-shrink: 0;
+        }
+
+        .schedule-info {
+            flex: 1;
+        }
+
+        .schedule-name {
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 6px;
+        }
+
+        .schedule-del {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--text3);
+            font-size: 16px;
+            transition: color 0.2s;
+        }
+
+        .schedule-del:hover {
+            color: var(--accent);
+        }
+
+        /* QUICK ADD */
+        .quick-add {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .quick-add .form-input,
+        .quick-add .form-select {
+            font-size: 13px;
+        }
+
+        /* STATS MINI */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 16px;
+        }
+
+        .stat-box {
+            background: var(--surface2);
+            border-radius: 12px;
+            padding: 14px;
+            text-align: center;
+        }
+
+        .stat-num {
+            font-family: 'DM Serif Display', serif;
+            font-size: 22px;
+            color: var(--accent);
+        }
+
+        .stat-lbl {
+            font-size: 11px;
+            color: var(--text3);
+            margin-top: 2px;
+        }
+
+        /* MOOD PAGE */
+        .mood-layout {
+            display: grid;
+            grid-template-columns: 1fr 340px;
+            gap: 20px;
+        }
+
+        @media(max-width:900px) {
+            .mood-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .mood-section {
+            margin-bottom: 20px;
+        }
+
+        .mood-section-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text2);
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .mood-emojis {
+            display: flex;
+            gap: 10px;
+        }
+
+        .mood-emoji {
+            flex: 1;
+            padding: 12px 8px;
+            border-radius: 12px;
+            border: 2px solid var(--border);
+            background: var(--surface2);
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .mood-emoji span:first-child {
+            font-size: 24px;
+        }
+
+        .mood-emoji span:last-child {
+            font-size: 10px;
+            color: var(--text3);
+        }
+
+        .mood-emoji.selected {
+            border-color: var(--accent);
+            background: rgba(232, 50, 124, 0.1);
+        }
+
+        .mood-emoji:hover {
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .energy-slider-wrap {
+            margin-bottom: 16px;
+        }
+
+        .energy-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .energy-label span:first-child {
+            font-size: 13px;
+            color: var(--text2);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .energy-label span:last-child {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--accent);
+        }
+
+        .slider {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            outline: none;
+            cursor: pointer;
+            -webkit-appearance: none;
+            appearance: none;
+            background: linear-gradient(90deg, var(--accent) var(--val, 60%), var(--surface3) var(--val, 60%));
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--accent);
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(232, 50, 124, 0.5);
+            border: 2px solid #fff;
+        }
+
+        .slider-hints {
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
+            color: var(--text3);
+            margin-top: 4px;
+        }
+
+        /* Physical monitoring sliders */
+        .phys-row {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .phys-item {
+            background: var(--surface2);
+            border-radius: 12px;
+            padding: 14px;
+        }
+
+        .phys-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .phys-name {
+            font-size: 13px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .phys-val {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--accent);
+        }
+
+        .phys-bar {
+            height: 6px;
+            border-radius: 3px;
+            background: var(--surface3);
+            overflow: hidden;
+            margin-bottom: 4px;
+        }
+
+        .phys-bar-fill {
+            height: 100%;
+            border-radius: 3px;
+            background: linear-gradient(90deg, var(--accent), var(--accent2));
+            transition: width 0.5s ease;
+        }
+
+        .phys-hints {
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
+            color: var(--text3);
+        }
+
+        /* Week avg */
+        .week-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .week-stat {
+            background: var(--surface2);
+            border-radius: 12px;
+            padding: 14px;
+        }
+
+        .week-stat-num {
+            font-family: 'DM Serif Display', serif;
+            font-size: 24px;
+        }
+
+        .week-stat-lbl {
+            font-size: 11px;
+            color: var(--text3);
+            margin-top: 2px;
+        }
+
+        /* AI Insights */
+        .insight-card {
+            background: linear-gradient(135deg, rgba(192, 38, 211, 0.1), rgba(232, 50, 124, 0.08));
+            border: 1px solid rgba(192, 38, 211, 0.2);
+            border-radius: 14px;
+            padding: 16px;
+        }
+
+        .insight-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--accent2);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .insight-item {
+            font-size: 13px;
+            color: var(--text2);
+            margin-bottom: 8px;
+            display: flex;
+            gap: 8px;
+            line-height: 1.5;
+        }
+
+        .insight-item:last-child {
+            margin-bottom: 0;
+        }
+
+        /* ANALYTICS */
+        .analytics-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 14px;
+            margin-bottom: 20px;
+        }
+
+        @media(max-width:900px) {
+            .analytics-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .astat {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 16px;
+        }
+
+        .astat-label {
+            font-size: 11px;
+            color: var(--text3);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-bottom: 8px;
+        }
+
+        .astat-num {
+            font-family: 'DM Serif Display', serif;
+            font-size: 28px;
+            margin-bottom: 4px;
+        }
+
+        .astat-sub {
+            font-size: 12px;
+            color: var(--text3);
+        }
+
+        /* CHARTS */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        @media(max-width:768px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .chart-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px;
+        }
+
+        .chart-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text2);
+            margin-bottom: 16px;
+        }
+
+        canvas {
+            width: 100% !important;
+            border-radius: 8px;
+        }
+
+        /* ALERTS ROW */
+        .alerts-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            margin-bottom: 20px;
+        }
+
+        @media(max-width:768px) {
+            .alerts-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .alert-box {
+            border-radius: 14px;
+            padding: 16px;
+        }
+
+        .alert-box.positive {
+            background: rgba(52, 211, 153, 0.08);
+            border: 1px solid rgba(52, 211, 153, 0.2);
+        }
+
+        .alert-box.warning {
+            background: rgba(245, 158, 11, 0.08);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+        }
+
+        .alert-box-title {
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .alert-box.positive .alert-box-title {
+            color: #34d399;
+        }
+
+        .alert-box.warning .alert-box-title {
+            color: var(--accent3);
+        }
+
+        .alert-box-text {
+            font-size: 12px;
+            color: var(--text2);
+            line-height: 1.5;
+        }
+
+        /* BURNOUT GAUGE */
+        .burnout-gauge-wrap {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            padding: 10px;
+        }
+
+        .gauge-ring {
+            position: relative;
+            width: 120px;
+            height: 120px;
+        }
+
+        .gauge-ring svg {
+            transform: rotate(-90deg);
+        }
+
+        .gauge-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+
+        .gauge-num {
+            font-family: 'DM Serif Display', serif;
+            font-size: 32px;
+            line-height: 1;
+        }
+
+        .gauge-lbl {
+            font-size: 10px;
+            color: var(--text3);
+        }
+
+        .gauge-status {
+            margin-top: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--accent3);
+        }
+
+        /* CHECK-IN CARD */
+        .checkin-items {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .checkin-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border-radius: 10px;
+            background: var(--surface2);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .checkin-item:hover {
+            background: var(--surface3);
+        }
+
+        .checkin-icon {
+            font-size: 16px;
+        }
+
+        .checkin-text {
+            font-size: 13px;
+            color: var(--text2);
+        }
+
+        /* NOTIFICATION TOAST */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 9999;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+            color: var(--text);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+            transform: translateY(80px);
+            opacity: 0;
+            transition: all 0.3s;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .toast-icon {
+            font-size: 18px;
+        }
+
+        /* DATE INPUT */
+        input[type="date"] {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text);
+            padding: 8px 12px;
+            font-size: 13px;
+            font-family: 'DM Sans', sans-serif;
+            outline: none;
+            cursor: pointer;
+        }
+
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            filter: invert(0.7);
+            cursor: pointer;
+        }
+
+        /* WEEKLY SUMMARY */
+        .week-summary {
+            background: var(--surface2);
+            border-radius: 12px;
+            padding: 14px;
+            margin-top: 16px;
+        }
+
+        .week-summary-title {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--text3);
+            margin-bottom: 12px;
+        }
+
+        .week-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 13px;
+        }
+
+        .week-row:last-child {
+            border-bottom: none;
+        }
+
+        .week-row span:first-child {
+            color: var(--text2);
+        }
+
+        .week-row span:last-child {
+            font-weight: 600;
+            color: var(--accent);
+        }
+
+        /* SIMPLE BAR CHART */
+        .bar-chart {
+            display: flex;
+            align-items: flex-end;
+            gap: 6px;
+            height: 120px;
+            padding-bottom: 20px;
+            position: relative;
+        }
+
+        .bar-chart::after {
+            content: '';
+            position: absolute;
+            bottom: 20px;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: var(--border);
+        }
+
+        .bar-col {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            height: 100%;
+            justify-content: flex-end;
+        }
+
+        .bar {
+            width: 100%;
+            border-radius: 4px 4px 0 0;
+            min-height: 4px;
+            transition: height 0.5s ease;
+            background: linear-gradient(180deg, var(--accent), var(--accent2));
+            opacity: 0.8;
+        }
+
+        .bar:hover {
+            opacity: 1;
+        }
+
+        .bar-label {
+            font-size: 10px;
+            color: var(--text3);
+            position: absolute;
+            bottom: 2px;
+        }
+
+        .bar-col-wrap {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100%;
+            justify-content: flex-end;
+            position: relative;
+        }
+
+        /* LINE CHART */
+        .line-chart-wrap {
+            position: relative;
+            height: 140px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 30px;
+            color: var(--text3);
+            font-size: 13px;
+        }
+
+        .empty-state .empty-icon {
+            font-size: 32px;
+            margin-bottom: 8px;
         }
     </style>
 </head>
 
 <body>
-    <div class="header">
-        <h2>MindfulPlanner</h2>
-        <div>Dashboard | Planner | Analytics</div>
-    </div>
+    <div class="app">
 
-    <div class="grid">
-        <!-- Блок Індексу -->
-        <div class="card">
-            <h3>Burnout Index</h3>
-            <div class="index-circle">{{ burnout_index }}</div>
-            <p align="center">Moderate</p>
-        </div>
-
-        <!-- Блок Прогресу -->
-        <div class="card">
-            <h3>Today's Progress</h3>
-            <h1 style="font-size: 48px;">2/5</h1>
-            <p>tasks completed</p>
-        </div>
-
-        <!-- Блок Статусу -->
-        <div class="card">
-            <h3>Today's Status</h3>
-            <p>Mood: {{ mood }}</p>
-            <p>Energy: {{ energy }}</p>
-        </div>
-
-        <!-- Список Задач -->
-        <div class="card" style="grid-column: span 2;">
-            <div style="display: flex; justify-content: space-between;">
-                <h3>Today's Tasks</h3>
-                <button class="btn">+ Add Task</button>
+        <!-- HEADER -->
+        <header>
+            <div class="logo">
+                <div class="logo-icon">📡</div>
+                <div>
+                    <div class="logo-text">BurnoutRadar</div>
+                    <div class="logo-sub">Smart burnout prevention</div>
+                </div>
             </div>
-            {% for task in tasks %}
-            <div class="task-card">
-                <strong>{{ task.title }}</strong><br>
-                <small>Priority: {{ task.priority }} | Difficulty: {{ task.difficulty }}</small>
+            <div class="header-right">
+                <span id="headerGreeting" style="font-size:13px;color:var(--text3);"></span>
+                <div class="bell-btn" title="Logout" onclick="logout()">🚪</div>
+                <div class="avatar" id="avatarBtn">?</div>
             </div>
-            {% endfor %}
-        </div>
+        </header>
 
-        <!-- Чекап -->
-        <div class="card">
-            <h3>Daily Check-in</h3>
-            <button class="btn" style="width: 100%; margin-bottom: 5px;">Log Mood</button>
-            <button class="btn" style="width: 100%; margin-bottom: 5px;">Rate Energy</button>
-            <button class="btn" style="width: 100%;">Write Reflection</button>
+        <!-- NAV -->
+        <nav>
+            <button class="nav-btn active" onclick="showPage('dashboard')">📊 Dashboard</button>
+            <button class="nav-btn" onclick="showPage('planner')">📅 Daily Planner</button>
+            <button class="nav-btn" onclick="showPage('mood')">💙 Mood & Energy</button>
+            <button class="nav-btn" onclick="showPage('analytics')">📈 Analytics</button>
+        </nav>
+
+        <main>
+
+            <!-- ====== DASHBOARD ====== -->
+            <div class="page active" id="page-dashboard">
+                <div class="grid-3">
+                    <!-- Burnout Index -->
+                    <div class="card">
+                        <div class="card-title">Burnout Index</div>
+                        <div class="burnout-ring">
+                            <div class="ring-wrap">
+                                <svg viewBox="0 0 100 100" width="100" height="100">
+                                    <circle class="ring-bg" cx="50" cy="50" r="42" />
+                                    <circle class="ring-fill" id="burnoutRing" cx="50" cy="50" r="42"
+                                        stroke-dasharray="264" stroke-dashoffset="264" stroke="url(#ringGrad)" />
+                                    <defs>
+                                        <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                                            <stop offset="0%" stop-color="#e8327c" />
+                                            <stop offset="100%" stop-color="#c026d3" />
+                                        </linearGradient>
+                                    </defs>
+                                </svg>
+                                <div class="ring-center">
+                                    <div class="ring-num" id="burnoutNum">45</div>
+                                    <div class="ring-label">/ 100</div>
+                                </div>
+                            </div>
+                            <div class="burnout-status" id="burnoutStatusBadge">Moderate</div>
+                        </div>
+                    </div>
+
+                    <!-- Today's Progress -->
+                    <div class="card">
+                        <div class="card-title">Today's Progress</div>
+                        <div class="progress-big" id="progressText">0/0</div>
+                        <div style="font-size:12px;color:var(--text3);">tasks completed</div>
+                        <div class="progress-bar-wrap">
+                            <div class="progress-bar" id="progressBar" style="width:0%"></div>
+                        </div>
+                    </div>
+
+                    <!-- Today's Status -->
+                    <div class="card">
+                        <div class="card-title">Today's Status</div>
+                        <div class="status-rows">
+                            <div class="status-row">
+                                <label>Mood</label>
+                                <div class="dots" id="moodDots">
+                                    <div class="dot filled"></div>
+                                    <div class="dot filled"></div>
+                                    <div class="dot filled"></div>
+                                    <div class="dot"></div>
+                                    <div class="dot"></div>
+                                </div>
+                            </div>
+                            <div class="status-row">
+                                <label>Energy</label>
+                                <div class="dots" id="energyDots">
+                                    <div class="dot filled"></div>
+                                    <div class="dot filled"></div>
+                                    <div class="dot filled"></div>
+                                    <div class="dot"></div>
+                                    <div class="dot"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid-2">
+                    <!-- Today's Tasks -->
+                    <div class="card">
+                        <div class="tasks-header">
+                            <span class="tasks-title">Today's Tasks</span>
+                            <button class="btn-add" onclick="openModal('task')">+ Add Task</button>
+                        </div>
+                        <div id="dashTaskList">
+                            <div class="empty-state">
+                                <div class="empty-icon">📝</div>No tasks yet. Add your first task!
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right column -->
+                    <div style="display:flex;flex-direction:column;gap:16px;">
+                        <!-- Smart Alert -->
+                        <div class="card alert-card">
+                            <div class="alert-icon">✦</div>
+                            <div class="alert-title">Smart Alert</div>
+                            <div class="alert-text" id="smartAlert">Log your mood and energy to get personalized
+                                insights.</div>
+                        </div>
+
+                        <!-- Daily Check-in -->
+                        <div class="card">
+                            <div class="card-title">Daily Check-in</div>
+                            <div class="checkin-items">
+                                <div class="checkin-item" onclick="showPage('mood')">
+                                    <span class="checkin-icon">💙</span>
+                                    <span class="checkin-text">Log your mood</span>
+                                </div>
+                                <div class="checkin-item" onclick="showPage('mood')">
+                                    <span class="checkin-icon">⚡</span>
+                                    <span class="checkin-text">Rate your energy</span>
+                                </div>
+                                <div class="checkin-item" onclick="showPage('mood')">
+                                    <span class="checkin-icon">📝</span>
+                                    <span class="checkin-text">Write reflection</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- This Week -->
+                        <div class="card">
+                            <div class="card-title">This Week</div>
+                            <div class="week-summary">
+                                <div class="week-row"><span>Tasks completed</span><span id="weekTasks">0/0</span></div>
+                                <div class="week-row"><span>Avg. energy level</span><span id="weekEnergy">—</span></div>
+                                <div class="week-row"><span>Reflection days</span><span id="weekReflections">0/7</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ====== DAILY PLANNER ====== -->
+            <div class="page" id="page-planner">
+                <div class="planner-header">
+                    <div class="planner-date">
+                        <h2>Daily Planner</h2>
+                        <p id="plannerDateDisplay"></p>
+                    </div>
+                    <div class="planner-actions">
+                        <input type="date" id="plannerDatePicker" onchange="renderPlanner()">
+                        <button class="btn-add" onclick="openModal('task')">+ Add Task</button>
+                    </div>
+                </div>
+
+                <div class="planner-layout">
+                    <!-- Schedule -->
+                    <div class="card">
+                        <div style="font-size:13px;font-weight:600;color:var(--text3);margin-bottom:14px;">📋 Schedule
+                        </div>
+                        <div id="scheduleList">
+                            <div class="empty-state">
+                                <div class="empty-icon">🗓</div>No tasks for this day. Add some!
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right side -->
+                    <div style="display:flex;flex-direction:column;gap:16px;">
+                        <!-- Quick Add -->
+                        <div class="card">
+                            <div class="card-title">Quick Add Task</div>
+                            <div class="quick-add">
+                                <input class="form-input" id="quickName" placeholder="Task name...">
+                                <div class="form-row">
+                                    <input class="form-input" id="quickTime" type="time" placeholder="Time">
+                                    <input class="form-input" id="quickDuration" placeholder="Duration (h)">
+                                </div>
+                                <select class="form-select" id="quickPriority">
+                                    <option value="high">High Priority</option>
+                                    <option value="medium">Medium Priority</option>
+                                    <option value="low">Low Priority</option>
+                                </select>
+                                <select class="form-select" id="quickDifficulty">
+                                    <option value="1">Difficulty 1/5</option>
+                                    <option value="2">Difficulty 2/5</option>
+                                    <option value="3">Difficulty 3/5</option>
+                                    <option value="4">Difficulty 4/5</option>
+                                    <option value="5">Difficulty 5/5</option>
+                                </select>
+                                <button class="btn-save" onclick="quickAddTask()">Add Task</button>
+                            </div>
+                        </div>
+
+                        <!-- Today's Stats -->
+                        <div class="card">
+                            <div class="card-title">Today's Stats</div>
+                            <div class="stats-grid">
+                                <div class="stat-box">
+                                    <div class="stat-num" id="statCompletion">0/0</div>
+                                    <div class="stat-lbl">Completion</div>
+                                </div>
+                                <div class="stat-box">
+                                    <div class="stat-num" id="statTime">0h</div>
+                                    <div class="stat-lbl">Total Time</div>
+                                </div>
+                                <div class="stat-box">
+                                    <div class="stat-num" id="statAvgDiff">0</div>
+                                    <div class="stat-lbl">Avg. Difficulty</div>
+                                </div>
+                                <div class="stat-box">
+                                    <div class="stat-num" id="statTasks">0</div>
+                                    <div class="stat-lbl">Tasks</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ====== MOOD & ENERGY ====== -->
+            <div class="page" id="page-mood">
+                <div style="margin-bottom:24px;">
+                    <h2 style="font-family:'DM Serif Display',serif;font-size:28px;">Mood & Energy Tracker</h2>
+                    <p style="color:var(--text3);font-size:13px;margin-top:4px;">How are you feeling today?</p>
+                </div>
+
+                <div class="mood-layout">
+                    <div>
+                        <!-- Mood Selection -->
+                        <div class="card" style="margin-bottom:16px;">
+                            <div class="mood-section-title">💙 Your Mood</div>
+                            <div class="mood-emojis" id="moodSelector">
+                                <div class="mood-emoji" onclick="selectMood(1)"><span>😞</span><span>Very Low</span>
+                                </div>
+                                <div class="mood-emoji" onclick="selectMood(2)"><span>😕</span><span>Low</span></div>
+                                <div class="mood-emoji" onclick="selectMood(3)"><span>😐</span><span>Neutral</span>
+                                </div>
+                                <div class="mood-emoji" onclick="selectMood(4)"><span>🙂</span><span>Good</span></div>
+                                <div class="mood-emoji" onclick="selectMood(5)"><span>😄</span><span>Great</span></div>
+                            </div>
+                        </div>
+
+                        <!-- Energy Sliders -->
+                        <div class="card" style="margin-bottom:16px;">
+                            <div class="energy-slider-wrap">
+                                <div class="energy-label">
+                                    <span>⚡ Mental Energy</span>
+                                    <span id="mentalVal">60%</span>
+                                </div>
+                                <input type="range" class="slider" id="mentalSlider" min="0" max="100" value="60"
+                                    style="--val:60%" oninput="updateSlider(this,'mentalVal')">
+                                <div class="slider-hints"><span>Exhausted</span><span>Energized</span></div>
+                            </div>
+                            <div style="height:16px;"></div>
+                            <div class="energy-slider-wrap">
+                                <div class="energy-label">
+                                    <span>💪 Physical Energy</span>
+                                    <span id="physVal">70%</span>
+                                </div>
+                                <input type="range" class="slider" id="physSlider" min="0" max="100" value="70"
+                                    style="--val:70%" oninput="updateSlider(this,'physVal')">
+                                <div class="slider-hints"><span>Drained</span><span>Full of energy</span></div>
+                            </div>
+                        </div>
+
+                        <!-- Reflection -->
+                        <div class="card">
+                            <div class="mood-section-title">📝 Daily Reflection</div>
+                            <textarea class="form-textarea" id="reflectionText"
+                                placeholder="What's on your mind? How did today go?"></textarea>
+                            <button class="btn-save" style="width:100%;margin-top:12px;" onclick="saveMoodData()">Save
+                                Reflection</button>
+                        </div>
+                    </div>
+
+                    <!-- Right Column -->
+                    <div style="display:flex;flex-direction:column;gap:16px;">
+                        <!-- Physical Monitoring -->
+                        <div class="card">
+                            <div class="card-title">Physical Monitoring</div>
+                            <div class="phys-row">
+                                <div class="phys-item">
+                                    <div class="phys-header">
+                                        <span class="phys-name">😴 Sleep</span>
+                                        <span class="phys-val" id="sleepVal">7h</span>
+                                    </div>
+                                    <input type="range" class="slider" id="sleepSlider" min="0" max="12" value="7"
+                                        style="--val:58%" oninput="updatePhys(this,'sleepVal','h','sleepBar',12)">
+                                    <div class="phys-bar" style="margin-top:8px;">
+                                        <div class="phys-bar-fill" id="sleepBar" style="width:58%"></div>
+                                    </div>
+                                    <div class="phys-hints"><span>0h</span><span>12h</span></div>
+                                </div>
+                                <div class="phys-item">
+                                    <div class="phys-header">
+                                        <span class="phys-name">💧 Hydration</span>
+                                        <span class="phys-val" id="hydVal">6 glasses</span>
+                                    </div>
+                                    <input type="range" class="slider" id="hydSlider" min="0" max="12" value="6"
+                                        style="--val:50%" oninput="updatePhys(this,'hydVal',' glasses','hydBar',12)">
+                                    <div class="phys-bar" style="margin-top:8px;">
+                                        <div class="phys-bar-fill" id="hydBar" style="width:50%"></div>
+                                    </div>
+                                    <div class="phys-hints"><span>0</span><span>12+</span></div>
+                                </div>
+                                <div class="phys-item">
+                                    <div class="phys-header">
+                                        <span class="phys-name">📱 Screen Time</span>
+                                        <span class="phys-val" id="screenVal">4h</span>
+                                    </div>
+                                    <input type="range" class="slider" id="screenSlider" min="0" max="16" value="4"
+                                        style="--val:25%" oninput="updatePhys(this,'screenVal','h','screenBar',16)">
+                                    <div class="phys-bar" style="margin-top:8px;">
+                                        <div class="phys-bar-fill" id="screenBar" style="width:25%"></div>
+                                    </div>
+                                    <div class="phys-hints"><span>0h</span><span>16h+</span></div>
+                                </div>
+                                <div class="phys-item">
+                                    <div class="phys-header">
+                                        <span class="phys-name">🏃 Movement</span>
+                                        <span class="phys-val" id="movVal">30 min</span>
+                                    </div>
+                                    <input type="range" class="slider" id="movSlider" min="0" max="120" value="30"
+                                        style="--val:25%" oninput="updatePhys(this,'movVal',' min','movBar',120)">
+                                    <div class="phys-bar" style="margin-top:8px;">
+                                        <div class="phys-bar-fill" id="movBar" style="width:25%"></div>
+                                    </div>
+                                    <div class="phys-hints"><span>0 min</span><span>120 min</span></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Week Average -->
+                        <div class="card">
+                            <div class="card-title">This Week's Average</div>
+                            <div class="week-stats">
+                                <div class="week-stat">
+                                    <div class="week-stat-num" id="wAvgMood">—</div>
+                                    <div class="week-stat-lbl">Avg. Mood</div>
+                                </div>
+                                <div class="week-stat">
+                                    <div class="week-stat-num" id="wAvgEnergy">—</div>
+                                    <div class="week-stat-lbl">Mental Energy</div>
+                                </div>
+                                <div class="week-stat">
+                                    <div class="week-stat-num" id="wAvgSleep">—</div>
+                                    <div class="week-stat-lbl">Avg. Sleep</div>
+                                </div>
+                                <div class="week-stat">
+                                    <div class="week-stat-num" id="wAvgMove">—</div>
+                                    <div class="week-stat-lbl">Avg. Movement</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- AI Insights -->
+                        <div class="insight-card" id="aiInsights">
+                            <div class="insight-title">🤖 AI Insights</div>
+                            <div class="insight-item">💡 Save your first check-in to get personalized insights!</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ====== ANALYTICS ====== -->
+            <div class="page" id="page-analytics">
+                <div style="margin-bottom:24px;">
+                    <h2 style="font-family:'DM Serif Display',serif;font-size:28px;">Burnout Analytics</h2>
+                    <p style="color:var(--text3);font-size:13px;margin-top:4px;">Comprehensive view of your well-being
+                        trends</p>
+                </div>
+
+                <!-- Top stats -->
+                <div class="analytics-stats">
+                    <div class="astat">
+                        <div class="astat-label">Current Index</div>
+                        <div class="astat-num" id="aCurrentIdx">45</div>
+                        <div class="astat-sub" id="aIdxChange">This week</div>
+                    </div>
+                    <div class="astat">
+                        <div class="astat-label">Avg. Mood</div>
+                        <div class="astat-num" id="aAvgMood">—</div>
+                        <div class="astat-sub">Out of 5.0</div>
+                    </div>
+                    <div class="astat">
+                        <div class="astat-label">Energy Level</div>
+                        <div class="astat-num" id="aEnergyLvl">—</div>
+                        <div class="astat-sub">Week average</div>
+                    </div>
+                    <div class="astat">
+                        <div class="astat-label">Workload</div>
+                        <div class="astat-num" id="aWorkload">—</div>
+                        <div class="astat-sub" id="aWorkloadH">This week</div>
+                    </div>
+                </div>
+
+                <!-- Alerts -->
+                <div class="alerts-row" id="analyticsAlerts">
+                    <div class="alert-box positive">
+                        <div class="alert-box-title">✅ Positive Trend</div>
+                        <div class="alert-box-text">Start logging your mood and tasks to see personalized analytics and
+                            trends.</div>
+                    </div>
+                    <div class="alert-box warning">
+                        <div class="alert-box-title">⚠️ Watch Out</div>
+                        <div class="alert-box-text">Keep track of your workload to avoid burnout. Consistent logging
+                            helps!</div>
+                    </div>
+                </div>
+
+                <!-- Charts -->
+                <div class="charts-grid">
+                    <div class="chart-card">
+                        <div class="chart-title">📊 Weekly Burnout Trend</div>
+                        <canvas id="burnoutChart" height="140"></canvas>
+                    </div>
+                    <div class="chart-card">
+                        <div class="chart-title">📦 Daily Workload (hours)</div>
+                        <canvas id="workloadChart" height="140"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-title">💙 Mood & Energy Levels</div>
+                    <canvas id="moodChart" height="100"></canvas>
+                </div>
+
+                <!-- Current burnout gauge -->
+                <div class="card" style="margin-top:16px;display:flex;align-items:center;gap:24px;flex-wrap:wrap;">
+                    <div class="burnout-gauge-wrap">
+                        <div class="gauge-ring">
+                            <svg viewBox="0 0 120 120" width="120" height="120">
+                                <circle fill="none" stroke="var(--surface3)" stroke-width="10" cx="60" cy="60" r="50" />
+                                <circle fill="none" stroke="url(#gGrad)" stroke-width="10" cx="60" cy="60" r="50"
+                                    stroke-dasharray="314" id="gaugeCircle" stroke-dashoffset="314"
+                                    stroke-linecap="round" />
+                                <defs>
+                                    <linearGradient id="gGrad" x1="0%" y1="0%" x2="100%">
+                                        <stop offset="0%" stop-color="#e8327c" />
+                                        <stop offset="100%" stop-color="#f59e0b" />
+                                    </linearGradient>
+                                </defs>
+                            </svg>
+                            <div class="gauge-center">
+                                <div class="gauge-num" id="gaugeNum">45</div>
+                                <div class="gauge-lbl">/ 100</div>
+                            </div>
+                        </div>
+                        <div class="gauge-status" id="gaugeStatus">Moderate</div>
+                    </div>
+                    <div style="flex:1;">
+                        <div style="font-family:'DM Serif Display',serif;font-size:20px;margin-bottom:8px;">Current
+                            Burnout Level</div>
+                        <div style="font-size:13px;color:var(--text2);line-height:1.6;" id="burnoutDescription">
+                            Your burnout level is moderate. Balance your workload and make sure to rest. Track your mood
+                            daily for better insights.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- ADD TASK MODAL -->
+    <div class="modal-overlay" id="modal-task">
+        <div class="modal">
+            <h3>Add New Task</h3>
+            <div class="form-group">
+                <label>Task Name</label>
+                <input class="form-input" id="taskName" placeholder="e.g. Study for exam...">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Time</label>
+                    <input class="form-input" id="taskTime" type="time">
+                </div>
+                <div class="form-group">
+                    <label>Duration (hours)</label>
+                    <input class="form-input" id="taskDuration" type="number" step="0.5" min="0.25" max="8"
+                        placeholder="e.g. 2">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Priority</label>
+                    <select class="form-select" id="taskPriority">
+                        <option value="high">🔴 High</option>
+                        <option value="medium">🟡 Medium</option>
+                        <option value="low">🟢 Low</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Difficulty (1-5)</label>
+                    <select class="form-select" id="taskDifficulty">
+                        <option value="1">1 — Very Easy</option>
+                        <option value="2">2 — Easy</option>
+                        <option value="3">3 — Moderate</option>
+                        <option value="4">4 — Hard</option>
+                        <option value="5">5 — Very Hard</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-btns">
+                <button class="btn-cancel" onclick="closeModal('task')">Cancel</button>
+                <button class="btn-save" onclick="addTask()">Add Task</button>
+            </div>
         </div>
     </div>
 
-    <div class="alert">
-        <strong>Smart Alert:</strong> You've had 3 intense days in a row. Consider taking breaks.
+    <!-- TOAST -->
+    <div class="toast" id="toast">
+        <span class="toast-icon" id="toastIcon">✅</span>
+        <span id="toastMsg">Saved!</span>
     </div>
+
+    <script>
+        // ============================================================
+        // STATE
+        // ============================================================
+        let state = {
+            tasks: [],
+            moodLogs: [],
+            selectedMood: null
+        };
+
+        function saveState() { localStorage.setItem('mindfulplanner', JSON.stringify(state)); }
+        function loadState() {
+            const d = localStorage.getItem('mindfulplanner');
+            if (d) state = JSON.parse(d);
+        }
+
+        // ============================================================
+        // NAV
+        // ============================================================
+        function showPage(id) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('page-' + id).classList.add('active');
+            const idx = { dashboard: 0, planner: 1, mood: 2, analytics: 3 }[id];
+            document.querySelectorAll('.nav-btn')[idx].classList.add('active');
+
+            if (id === 'dashboard') renderDashboard();
+            if (id === 'planner') renderPlanner();
+            if (id === 'mood') renderMood();
+            if (id === 'analytics') renderAnalytics();
+        }
+
+        // ============================================================
+        // MODAL
+        // ============================================================
+        function openModal(id) { document.getElementById('modal-' + id).classList.add('open'); }
+        function closeModal(id) { document.getElementById('modal-' + id).classList.remove('open'); }
+        document.querySelectorAll('.modal-overlay').forEach(m => {
+            m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+        });
+
+        // ============================================================
+        // TASKS
+        // ============================================================
+        function addTask() {
+            const name = document.getElementById('taskName').value.trim();
+            if (!name) { showToast('⚠️', 'Please enter a task name'); return; }
+            const date = document.getElementById('plannerDatePicker').value || todayStr();
+            const task = {
+                id: Date.now(),
+                name,
+                time: document.getElementById('taskTime').value || '09:00',
+                duration: parseFloat(document.getElementById('taskDuration').value) || 1,
+                priority: document.getElementById('taskPriority').value,
+                difficulty: parseInt(document.getElementById('taskDifficulty').value),
+                done: false,
+                date
+            };
+            state.tasks.push(task);
+            saveState();
+            closeModal('task');
+            ['taskName', 'taskTime', 'taskDuration'].forEach(id => document.getElementById(id).value = '');
+            showToast('✅', 'Task added!');
+            renderDashboard(); renderPlanner();
+        }
+
+        function quickAddTask() {
+            const name = document.getElementById('quickName').value.trim();
+            if (!name) { showToast('⚠️', 'Enter a task name'); return; }
+            const date = document.getElementById('plannerDatePicker').value || todayStr();
+            const task = {
+                id: Date.now(),
+                name,
+                time: document.getElementById('quickTime').value || '09:00',
+                duration: parseFloat(document.getElementById('quickDuration').value) || 1,
+                priority: document.getElementById('quickPriority').value,
+                difficulty: parseInt(document.getElementById('quickDifficulty').value),
+                done: false,
+                date
+            };
+            state.tasks.push(task);
+            saveState();
+            document.getElementById('quickName').value = '';
+            document.getElementById('quickTime').value = '';
+            document.getElementById('quickDuration').value = '';
+            showToast('✅', 'Task added!');
+            renderPlanner(); renderDashboard();
+        }
+
+        function toggleTask(id) {
+            const t = state.tasks.find(t => t.id === id);
+            if (t) { t.done = !t.done; saveState(); recalcBurnout(); renderDashboard(); renderPlanner(); }
+        }
+
+        function deleteTask(id) {
+            state.tasks = state.tasks.filter(t => t.id !== id);
+            saveState(); renderDashboard(); renderPlanner();
+            showToast('🗑', 'Task removed');
+        }
+
+        // ============================================================
+        // DASHBOARD
+        // ============================================================
+        function renderDashboard() {
+            const today = todayStr();
+            const todayTasks = state.tasks.filter(t => t.date === today);
+            const done = todayTasks.filter(t => t.done).length;
+            const total = todayTasks.length;
+
+            document.getElementById('progressText').textContent = `${done}/${total}`;
+            document.getElementById('progressBar').style.width = total > 0 ? `${Math.round(done / total * 100)}%` : '0%';
+
+            // Burnout ring
+            const bi = calcBurnoutIndex();
+            const circumference = 264;
+            const offset = circumference - (bi / 100) * circumference;
+            document.getElementById('burnoutRing').style.strokeDashoffset = offset;
+            document.getElementById('burnoutNum').textContent = bi;
+            const status = burnoutStatus(bi);
+            document.getElementById('burnoutStatusBadge').textContent = status;
+
+            // Task list
+            const el = document.getElementById('dashTaskList');
+            if (todayTasks.length === 0) {
+                el.innerHTML = '<div class="empty-state"><div class="empty-icon">📝</div>No tasks yet. Add your first task!</div>';
+            } else {
+                el.innerHTML = todayTasks.sort((a, b) => a.time.localeCompare(b.time)).map(t => taskItemHTML(t, false)).join('');
+            }
+
+            // Status dots
+            const todayLog = getTodayLog();
+            if (todayLog) {
+                renderDots('moodDots', todayLog.mood);
+                renderDots('energyDots', Math.round(todayLog.mental / 20));
+            }
+
+            // Smart alert
+            updateSmartAlert(bi, todayTasks);
+
+            // Week summary
+            const weekTasks = getWeekTasks();
+            const weekDone = weekTasks.filter(t => t.done).length;
+            document.getElementById('weekTasks').textContent = `${weekDone}/${weekTasks.length}`;
+            const energies = state.moodLogs.slice(-7).map(l => l.mental);
+            document.getElementById('weekEnergy').textContent = energies.length > 0 ? `${Math.round(energies.reduce((a, b) => a + b, 0) / energies.length)}%` : '—';
+            const reflDays = state.moodLogs.slice(-7).filter(l => l.reflection && l.reflection.trim()).length;
+            document.getElementById('weekReflections').textContent = `${reflDays}/7`;
+        }
+
+        function taskItemHTML(t, showTime = true) {
+            return `<div class="task-item">
+    <div class="task-check ${t.done ? 'done' : ''}" onclick="toggleTask(${t.id})"></div>
+    <div class="task-info">
+      <div class="task-name ${t.done ? 'done' : ''}">${t.name}</div>
+      <div class="task-tags">
+        <span class="tag ${t.priority}">${t.priority}</span>
+        <span class="tag diff">Difficulty: ${t.difficulty}/5</span>
+        ${showTime ? `<span class="tag diff">${t.time} · ${t.duration}h</span>` : ''}
+      </div>
+    </div>
+    <button class="task-del" onclick="deleteTask(${t.id})">×</button>
+  </div>`;
+        }
+
+        function renderDots(id, val) {
+            const el = document.getElementById(id);
+            el.innerHTML = [1, 2, 3, 4, 5].map(i => `<div class="dot ${i <= val ? 'filled' : ''}"></div>`).join('');
+        }
+
+        function updateSmartAlert(bi, tasks) {
+            const el = document.getElementById('smartAlert');
+            const heavyDays = state.moodLogs.filter(l => l.mental < 40).length;
+            if (bi >= 70) el.textContent = '⚠️ High burnout detected. Please rest and reduce workload today.';
+            else if (bi >= 50) el.textContent = "You've had intense days recently. Consider taking breaks between tasks today.";
+            else if (tasks.length > 6) el.textContent = `⚠️ Heavy workload today (${tasks.reduce((a, t) => a + t.duration, 0).toFixed(1)}h). Remember to take breaks!`;
+            else el.textContent = '✅ Your workload looks balanced today. Keep it up!';
+        }
+
+        // ============================================================
+        // PLANNER
+        // ============================================================
+        function renderPlanner() {
+            const dateVal = document.getElementById('plannerDatePicker').value || todayStr();
+            document.getElementById('plannerDatePicker').value = dateVal;
+            const d = new Date(dateVal + 'T00:00:00');
+            document.getElementById('plannerDateDisplay').textContent = d.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+            const dayTasks = state.tasks.filter(t => t.date === dateVal)
+                .sort((a, b) => a.time.localeCompare(b.time));
+
+            const sl = document.getElementById('scheduleList');
+            if (dayTasks.length === 0) {
+                sl.innerHTML = '<div class="empty-state"><div class="empty-icon">🗓</div>No tasks for this day. Add some!</div>';
+            } else {
+                sl.innerHTML = dayTasks.map(t => `
+      <div class="schedule-item ${t.priority}">
+        <div class="schedule-time">${t.time}<br><span style="font-size:10px;">${t.duration}h</span></div>
+        <div class="schedule-info">
+          <div class="schedule-name ${t.done ? 'done' : ''}" style="${t.done ? 'text-decoration:line-through;color:var(--text3);' : ''}">${t.name}</div>
+          <div class="task-tags" style="margin-top:6px;">
+            <span class="tag ${t.priority}">${t.priority} priority</span>
+            <span class="tag diff">Difficulty: ${t.difficulty}/5</span>
+          </div>
+        </div>
+        <button class="task-check ${t.done ? 'done' : ''}" style="margin-top:0;" onclick="toggleTask(${t.id})"></button>
+        <button class="schedule-del" onclick="deleteTask(${t.id})">×</button>
+      </div>`).join('');
+            }
+
+            // Stats
+            const done = dayTasks.filter(t => t.done).length;
+            const totalHours = dayTasks.reduce((a, t) => a + t.duration, 0);
+            const avgDiff = dayTasks.length > 0 ? (dayTasks.reduce((a, t) => a + t.difficulty, 0) / dayTasks.length).toFixed(1) : 0;
+            document.getElementById('statCompletion').textContent = `${done}/${dayTasks.length}`;
+            document.getElementById('statTime').textContent = `${totalHours.toFixed(1)}h`;
+            document.getElementById('statAvgDiff').textContent = avgDiff;
+            document.getElementById('statTasks').textContent = dayTasks.length;
+        }
+
+        // ============================================================
+        // MOOD
+        // ============================================================
+        function selectMood(val) {
+            state.selectedMood = val;
+            document.querySelectorAll('.mood-emoji').forEach((el, i) => {
+                el.classList.toggle('selected', i === val - 1);
+            });
+        }
+
+        function updateSlider(el, labelId) {
+            const val = el.value;
+            el.style.setProperty('--val', val + '%');
+            document.getElementById(labelId).textContent = val + '%';
+        }
+
+        function updatePhys(el, labelId, unit, barId, max) {
+            const val = parseInt(el.value);
+            const pct = Math.round(val / max * 100);
+            el.style.setProperty('--val', pct + '%');
+            document.getElementById(labelId).textContent = val + unit;
+            document.getElementById(barId).style.width = pct + '%';
+        }
+
+        function saveMoodData() {
+            if (!state.selectedMood) { showToast('⚠️', 'Please select your mood first'); return; }
+            const log = {
+                date: todayStr(),
+                mood: state.selectedMood,
+                mental: parseInt(document.getElementById('mentalSlider').value),
+                physical: parseInt(document.getElementById('physSlider').value),
+                sleep: parseInt(document.getElementById('sleepSlider').value),
+                hydration: parseInt(document.getElementById('hydSlider').value),
+                screenTime: parseInt(document.getElementById('screenSlider').value),
+                movement: parseInt(document.getElementById('movSlider').value),
+                reflection: document.getElementById('reflectionText').value.trim()
+            };
+            // Remove today's existing log if any
+            state.moodLogs = state.moodLogs.filter(l => l.date !== todayStr());
+            state.moodLogs.push(log);
+            saveState();
+            showToast('✅', 'Mood & energy saved!');
+            renderMood(); renderDashboard(); renderAnalytics();
+        }
+
+        function renderMood() {
+            const todayLog = getTodayLog();
+            if (todayLog) {
+                selectMood(todayLog.mood);
+                document.getElementById('mentalSlider').value = todayLog.mental;
+                document.getElementById('mentalVal').textContent = todayLog.mental + '%';
+                document.getElementById('mentalSlider').style.setProperty('--val', todayLog.mental + '%');
+                document.getElementById('physSlider').value = todayLog.physical;
+                document.getElementById('physVal').textContent = todayLog.physical + '%';
+                document.getElementById('physSlider').style.setProperty('--val', todayLog.physical + '%');
+                document.getElementById('sleepSlider').value = todayLog.sleep;
+                document.getElementById('sleepVal').textContent = todayLog.sleep + 'h';
+                document.getElementById('sleepBar').style.width = Math.round(todayLog.sleep / 12 * 100) + '%';
+                document.getElementById('hydSlider').value = todayLog.hydration;
+                document.getElementById('hydVal').textContent = todayLog.hydration + ' glasses';
+                document.getElementById('hydBar').style.width = Math.round(todayLog.hydration / 12 * 100) + '%';
+                document.getElementById('screenSlider').value = todayLog.screenTime;
+                document.getElementById('screenVal').textContent = todayLog.screenTime + 'h';
+                document.getElementById('screenBar').style.width = Math.round(todayLog.screenTime / 16 * 100) + '%';
+                document.getElementById('movSlider').value = todayLog.movement;
+                document.getElementById('movVal').textContent = todayLog.movement + ' min';
+                document.getElementById('movBar').style.width = Math.round(todayLog.movement / 120 * 100) + '%';
+                if (todayLog.reflection) document.getElementById('reflectionText').value = todayLog.reflection;
+            }
+
+            // Week averages
+            const logs7 = state.moodLogs.slice(-7);
+            if (logs7.length > 0) {
+                const avg = arr => (arr.reduce((a, b) => a + b, 0) / arr.length);
+                document.getElementById('wAvgMood').textContent = avg(logs7.map(l => l.mood)).toFixed(1);
+                document.getElementById('wAvgEnergy').textContent = Math.round(avg(logs7.map(l => l.mental))) + '%';
+                document.getElementById('wAvgSleep').textContent = avg(logs7.map(l => l.sleep)).toFixed(1) + 'h';
+                document.getElementById('wAvgMove').textContent = Math.round(avg(logs7.map(l => l.movement))) + 'm';
+            }
+
+            // AI Insights
+            renderAIInsights(todayLog);
+        }
+
+        function renderAIInsights(log) {
+            if (!log) return;
+            const insights = [];
+            if (log.sleep >= 7) insights.push('✅ Great sleep duration! Keep it up.');
+            else if (log.sleep < 6) insights.push('😴 Sleep is below optimal. Try to get 7-8 hours.');
+            if (log.screenTime > 8) insights.push('⚠️ Screen time is high. Consider a digital detox.');
+            else if (log.screenTime <= 4) insights.push('✅ Good screen time balance!');
+            if (log.hydration < 6) insights.push(`💧 Try to increase water intake by ${8 - log.hydration} more glasses.`);
+            else insights.push('💧 Great hydration today!');
+            if (log.movement < 20) insights.push('🏃 Try to move more — even a 20-min walk helps.');
+            else insights.push(`🏃 Good movement today (${log.movement} min)!`);
+
+            document.getElementById('aiInsights').innerHTML = `
+    <div class="insight-title">🤖 AI Insights</div>
+    <div>Based on your inputs:</div>
+    ${insights.map(i => `<div class="insight-item">${i}</div>`).join('')}
+  `;
+        }
+
+        // ============================================================
+        // ANALYTICS
+        // ============================================================
+        function renderAnalytics() {
+            const bi = calcBurnoutIndex();
+            document.getElementById('aCurrentIdx').textContent = bi;
+            document.getElementById('gaugeNum').textContent = bi;
+            const status = burnoutStatus(bi);
+            document.getElementById('gaugeStatus').textContent = status;
+
+            const gaugeOffset = 314 - (bi / 100) * 314;
+            document.getElementById('gaugeCircle').style.strokeDashoffset = gaugeOffset;
+
+            const burnoutDescriptions = {
+                Low: 'Your burnout level is low. Keep maintaining healthy habits!',
+                Moderate: 'Your burnout level is moderate. Balance your workload and rest regularly.',
+                High: 'Burnout level is high. Prioritize rest, reduce workload, and seek support.',
+                Critical: 'Critical burnout! Please take immediate action: rest, delegate tasks, and consider professional help.'
+            };
+            document.getElementById('burnoutDescription').textContent = burnoutDescriptions[status] || '';
+
+            const logs7 = state.moodLogs.slice(-7);
+            if (logs7.length > 0) {
+                const avg = arr => (arr.reduce((a, b) => a + b, 0) / arr.length);
+                document.getElementById('aAvgMood').textContent = avg(logs7.map(l => l.mood)).toFixed(1);
+                document.getElementById('aEnergyLvl').textContent = Math.round(avg(logs7.map(l => l.mental))) + '%';
+            } else {
+                document.getElementById('aAvgMood').textContent = '—';
+                document.getElementById('aEnergyLvl').textContent = '—';
+            }
+
+            const weekTasks = getWeekTasks();
+            const totalH = weekTasks.reduce((a, t) => a + t.duration, 0);
+            document.getElementById('aWorkload').textContent = totalH > 0 ? `${totalH.toFixed(0)}h` : '—';
+            if (totalH >= 40) document.getElementById('aWorkloadH').textContent = 'Heavy this week';
+            else if (totalH >= 20) document.getElementById('aWorkloadH').textContent = 'Moderate this week';
+            else document.getElementById('aWorkloadH').textContent = 'Light this week';
+
+            renderCharts();
+        }
+
+        let chartInstances = {};
+        function renderCharts() {
+            // Destroy old charts
+            Object.values(chartInstances).forEach(c => c && typeof c.destroy === 'function' && c.destroy());
+
+            const days = getLast7Days();
+            const dayLabels = days.map(d => {
+                const dt = new Date(d + 'T00:00:00');
+                return dt.toLocaleDateString('en-US', { weekday: 'short' });
+            });
+
+            // Burnout trend
+            const burnoutData = days.map(d => calcBurnoutForDate(d));
+            chartInstances.burnout = drawBarChart('burnoutChart', dayLabels, burnoutData, '#e8327c', 100);
+
+            // Workload
+            const workloadData = days.map(d => {
+                return state.tasks.filter(t => t.date === d).reduce((a, t) => a + t.duration, 0);
+            });
+            chartInstances.workload = drawBarChart('workloadChart', dayLabels, workloadData, '#c026d3', 12);
+
+            // Mood & Energy
+            const moodData = days.map(d => { const l = state.moodLogs.find(l => l.date === d); return l ? l.mood * 20 : null; });
+            const energyData = days.map(d => { const l = state.moodLogs.find(l => l.date === d); return l ? l.mental : null; });
+            chartInstances.mood = drawLineChart('moodChart', dayLabels, moodData, energyData);
+        }
+
+        function drawBarChart(canvasId, labels, data, color, max) {
+            const canvas = document.getElementById(canvasId);
+            const ctx = canvas.getContext('2d');
+            const W = canvas.offsetWidth || 300;
+            const H = 140;
+            canvas.width = W; canvas.height = H;
+            ctx.clearRect(0, 0, W, H);
+
+            const pad = { left: 30, right: 10, top: 10, bottom: 24 };
+            const chartW = W - pad.left - pad.right;
+            const chartH = H - pad.top - pad.bottom;
+            const barW = chartW / labels.length * 0.6;
+            const gap = chartW / labels.length;
+
+            // Grid lines
+            ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+            ctx.lineWidth = 1;
+            for (let i = 0; i <= 4; i++) {
+                const y = pad.top + chartH - (i / 4) * chartH;
+                ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(W - pad.right, y); ctx.stroke();
+                ctx.fillStyle = 'rgba(255,255,255,0.3)'; ctx.font = '10px DM Sans'; ctx.textAlign = 'right';
+                ctx.fillText(Math.round(max * i / 4), pad.left - 4, y + 4);
+            }
+
+            // Bars
+            const grad = ctx.createLinearGradient(0, pad.top, 0, pad.top + chartH);
+            grad.addColorStop(0, color);
+            grad.addColorStop(1, color + '33');
+
+            data.forEach((val, i) => {
+                const x = pad.left + i * gap + gap / 2 - barW / 2;
+                const barH = chartH * (val || 0) / max;
+                const y = pad.top + chartH - barH;
+                ctx.fillStyle = grad;
+                ctx.beginPath();
+                ctx.roundRect ? ctx.roundRect(x, y, barW, barH, [4, 4, 0, 0]) : ctx.rect(x, y, barW, barH);
+                ctx.fill();
+
+                ctx.fillStyle = 'rgba(255,255,255,0.4)'; ctx.textAlign = 'center'; ctx.font = '10px DM Sans';
+                ctx.fillText(labels[i], pad.left + i * gap + gap / 2, H - 4);
+            });
+
+            return { destroy: () => { } };
+        }
+
+        function drawLineChart(canvasId, labels, data1, data2) {
+            const canvas = document.getElementById(canvasId);
+            const ctx = canvas.getContext('2d');
+            const W = canvas.offsetWidth || 600;
+            const H = 120;
+            canvas.width = W; canvas.height = H;
+            ctx.clearRect(0, 0, W, H);
+
+            const pad = { left: 30, right: 10, top: 10, bottom: 24 };
+            const chartW = W - pad.left - pad.right;
+            const chartH = H - pad.top - pad.bottom;
+            const n = labels.length;
+            const step = chartW / (n - 1 || 1);
+
+            // Grid
+            ctx.strokeStyle = 'rgba(255,255,255,0.06)'; ctx.lineWidth = 1;
+            for (let i = 0; i <= 4; i++) {
+                const y = pad.top + chartH * (1 - i / 4);
+                ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(W - pad.right, y); ctx.stroke();
+            }
+
+            function drawLine(data, color) {
+                const pts = data.map((v, i) => [pad.left + i * step, pad.top + chartH * (1 - (v || 0) / 100)]);
+                const valid = pts.filter((_, i) => data[i] !== null);
+                if (valid.length < 2) return;
+                ctx.beginPath(); ctx.strokeStyle = color; ctx.lineWidth = 2.5; ctx.lineJoin = 'round';
+                let started = false;
+                pts.forEach(([x, y], i) => {
+                    if (data[i] === null) { started = false; return; }
+                    if (!started) { ctx.moveTo(x, y); started = true; } else ctx.lineTo(x, y);
+                });
+                ctx.stroke();
+                // Dots
+                pts.forEach(([x, y], i) => {
+                    if (data[i] === null) return;
+                    ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI * 2);
+                    ctx.fillStyle = color; ctx.fill();
+                    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(x, y, 2, 0, Math.PI * 2); ctx.fill();
+                });
+            }
+
+            drawLine(data1, '#e8327c');
+            drawLine(data2, '#f59e0b');
+
+            // Labels
+            ctx.fillStyle = 'rgba(255,255,255,0.4)'; ctx.font = '10px DM Sans'; ctx.textAlign = 'center';
+            labels.forEach((l, i) => ctx.fillText(l, pad.left + i * step, H - 4));
+
+            return { destroy: () => { } };
+        }
+
+        // ============================================================
+        // BURNOUT CALC
+        // ============================================================
+        function calcBurnoutIndex() {
+            const today = todayStr();
+            return calcBurnoutForDate(today);
+        }
+
+        function calcBurnoutForDate(date) {
+            const dayTasks = state.tasks.filter(t => t.date === date);
+            const log = state.moodLogs.find(l => l.date === date);
+
+            let score = 30; // base
+            // Workload factor
+            const hours = dayTasks.reduce((a, t) => a + t.duration, 0);
+            score += Math.min(hours * 3, 30);
+            // Difficulty factor
+            if (dayTasks.length > 0) {
+                const avgDiff = dayTasks.reduce((a, t) => a + t.difficulty, 0) / dayTasks.length;
+                score += avgDiff * 3;
+            }
+            // Mood/energy factor
+            if (log) {
+                score -= (log.mood - 3) * 5;
+                score -= (log.mental - 50) * 0.2;
+                if (log.sleep >= 7) score -= 5;
+                else if (log.sleep < 6) score += 8;
+                if (log.movement >= 30) score -= 4;
+            }
+            return Math.max(0, Math.min(100, Math.round(score)));
+        }
+
+        function burnoutStatus(n) {
+            if (n < 30) return 'Low';
+            if (n < 55) return 'Moderate';
+            if (n < 75) return 'High';
+            return 'Critical';
+        }
+
+        // ============================================================
+        // HELPERS
+        // ============================================================
+        function todayStr() {
+            return new Date().toISOString().split('T')[0];
+        }
+
+        function getLast7Days() {
+            const days = [];
+            for (let i = 6; i >= 0; i--) {
+                const d = new Date(); d.setDate(d.getDate() - i);
+                days.push(d.toISOString().split('T')[0]);
+            }
+            return days;
+        }
+
+        function getWeekTasks() {
+            const days = getLast7Days();
+            return state.tasks.filter(t => days.includes(t.date));
+        }
+
+        function getTodayLog() {
+            return state.moodLogs.find(l => l.date === todayStr()) || null;
+        }
+
+        function recalcBurnout() {
+            const bi = calcBurnoutIndex();
+            const circumference = 264;
+            const offset = circumference - (bi / 100) * circumference;
+            const ring = document.getElementById('burnoutRing');
+            if (ring) ring.style.strokeDashoffset = offset;
+            const num = document.getElementById('burnoutNum');
+            if (num) num.textContent = bi;
+            const badge = document.getElementById('burnoutStatusBadge');
+            if (badge) badge.textContent = burnoutStatus(bi);
+        }
+
+        // ============================================================
+        // TOAST
+        // ============================================================
+        function showToast(icon, msg) {
+            const t = document.getElementById('toast');
+            document.getElementById('toastIcon').textContent = icon;
+            document.getElementById('toastMsg').textContent = msg;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 2500);
+        }
+
+        // ============================================================
+        // USER / AUTH
+        // ============================================================
+        function loadUser() {
+            const username = "{{ user.username }}";
+            const initial = username[0].toUpperCase();
+            document.getElementById('avatarBtn').textContent = initial;
+            document.getElementById('headerGreeting').textContent = `Hi, ${username}!`;
+        }
+
+        function logout() {
+            window.location.href = "{% url 'logout' %}";
+        }
+
+        // ============================================================
+        // INIT
+        // ============================================================
+        function init() {
+            loadUser();
+            loadState();
+            // Set planner date to today
+            document.getElementById('plannerDatePicker').value = todayStr();
+            // Animate burnout ring on load
+            setTimeout(() => {
+                const bi = calcBurnoutIndex();
+                const offset = 264 - (bi / 100) * 264;
+                document.getElementById('burnoutRing').style.strokeDashoffset = offset;
+                document.getElementById('burnoutNum').textContent = bi;
+                document.getElementById('burnoutStatusBadge').textContent = burnoutStatus(bi);
+            }, 200);
+            renderDashboard();
+
+            // Handle window resize for charts
+            window.addEventListener('resize', () => {
+                if (document.getElementById('page-analytics').classList.contains('active')) {
+                    renderCharts();
+                }
+            });
+        }
+
+        init();
+    </script>
 </body>
 
 </html>
