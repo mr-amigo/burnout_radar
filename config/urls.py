@@ -8,6 +8,14 @@ urlpatterns = [
     path('login/', views.auth_view, name='login'),
     path('register/', views.auth_view, name='register'),
     path('logout/', views.logout_view, name='logout'),
-    path('api/mood/update/', views.update_mood_api, name='update_mood_api'),
-    path('api/health/update/', views.update_health_api, name='update_health_api')
+
+    # Tasks
+    path('api/tasks/', views.task_list, name='task_list'),
+    path('api/tasks/add/', views.task_add, name='task_add'),
+    path('api/tasks/<int:task_id>/toggle/',
+         views.task_toggle, name='task_toggle'),
+    path('api/tasks/<int:task_id>/delete/',
+         views.task_delete, name='task_delete'),
+    path('api/mood/update/', views.update_mood_api, name='update_mood_api'), # mood
+    path('api/health/update/', views.update_health_api, name='update_health_api') # health
 ]
