@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+!DOCTYPE html>
 <html lang="uk">
 
 <head>
@@ -34,10 +34,11 @@
       background: var(--bg);
       color: var(--text);
       min-height: 100vh;
+      min-height: 100dvh; /* fix: Safari mobile висота */
       display: flex;
       align-items: center;
       justify-content: center;
-      overflow: hidden;
+      overflow-x: hidden; /* fix: було overflow:hidden — блокувало скролінг на телефоні */
     }
 
     body::before {
@@ -53,13 +54,8 @@
     }
 
     @keyframes bgPulse {
-      from {
-        opacity: 0.8;
-      }
-
-      to {
-        opacity: 1;
-      }
+      from { opacity: 0.8; }
+      to { opacity: 1; }
     }
 
     .particles {
@@ -78,23 +74,10 @@
     }
 
     @keyframes float {
-      0% {
-        transform: translateY(100vh) scale(0);
-        opacity: 0;
-      }
-
-      10% {
-        opacity: 1;
-      }
-
-      90% {
-        opacity: 0.3;
-      }
-
-      100% {
-        transform: translateY(-100px) scale(1);
-        opacity: 0;
-      }
+      0% { transform: translateY(100vh) scale(0); opacity: 0; }
+      10% { opacity: 1; }
+      90% { opacity: 0.3; }
+      100% { transform: translateY(-100px) scale(1); opacity: 0; }
     }
 
     .card-wrap {
@@ -103,28 +86,27 @@
       width: 100%;
       max-width: 500px;
       padding: 20px;
+      padding-top: 32px;   /* fix: відступ зверху на мобільних */
+      padding-bottom: 32px;
     }
 
     .step-card {
       background: rgba(26, 16, 40, 0.9);
       border: 1px solid var(--border);
       border-radius: 24px;
-      padding: 40px;
+      padding: 28px 20px; /* fix: менший padding на мобільних */
       backdrop-filter: blur(20px);
       box-shadow: 0 30px 80px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.03);
       animation: cardIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
 
-    @keyframes cardIn {
-      from {
-        opacity: 0;
-        transform: translateY(24px) scale(0.97);
-      }
+    @media (min-width: 480px) {
+      .step-card { padding: 40px; } /* оригінальний padding на десктопі */
+    }
 
-      to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-      }
+    @keyframes cardIn {
+      from { opacity: 0; transform: translateY(24px) scale(0.97); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
     }
 
     .logo {
@@ -137,6 +119,7 @@
     .logo-icon {
       width: 42px;
       height: 42px;
+      flex-shrink: 0; /* fix: іконка не стискається */
       border-radius: 12px;
       background: linear-gradient(135deg, var(--accent), var(--accent2));
       display: flex;
@@ -148,15 +131,8 @@
     }
 
     @keyframes logoPulse {
-
-      0%,
-      100% {
-        box-shadow: 0 0 20px var(--glow);
-      }
-
-      50% {
-        box-shadow: 0 0 40px rgba(232, 50, 124, 0.4);
-      }
+      0%, 100% { box-shadow: 0 0 20px var(--glow); }
+      50% { box-shadow: 0 0 40px rgba(232, 50, 124, 0.4); }
     }
 
     .logo-text {
@@ -191,8 +167,12 @@
 
     .welcome-hero h1 {
       font-family: 'DM Serif Display', serif;
-      font-size: 32px;
+      font-size: 28px; /* fix: менший на мобільних */
       margin-bottom: 8px;
+    }
+
+    @media (min-width: 400px) {
+      .welcome-hero h1 { font-size: 32px; }
     }
 
     .welcome-hero p {
@@ -221,6 +201,7 @@
 
     .feature-icon {
       font-size: 18px;
+      flex-shrink: 0; /* fix: іконка не стискається */
     }
 
     .feature-text {
@@ -228,7 +209,6 @@
       color: var(--text2);
     }
 
-    /* LOGIN FORM */
     .login-title {
       font-family: 'DM Serif Display', serif;
       font-size: 26px;
@@ -264,9 +244,11 @@
       border: 1px solid var(--border);
       color: var(--text);
       font-family: 'DM Sans', sans-serif;
-      font-size: 14px;
+      font-size: 16px; /* fix: мінімум 16px — iOS не зумить при фокусі */
       outline: none;
       transition: all 0.25s;
+      -webkit-appearance: none; /* fix: прибирає iOS стилізацію */
+      appearance: none;
     }
 
     .form-input:focus {
@@ -292,6 +274,9 @@
       transition: all 0.25s;
       margin-top: 8px;
       box-shadow: 0 8px 25px rgba(232, 50, 124, 0.35);
+      min-height: 52px; /* fix: зручний розмір для тапу на телефоні */
+      -webkit-appearance: none; /* fix: прибирає iOS стилізацію */
+      appearance: none;
     }
 
     .btn-primary:hover {
@@ -348,6 +333,7 @@
       font-weight: 500;
       cursor: pointer;
       transition: all 0.2s;
+      min-height: 44px; /* fix: зручний розмір для тапу */
     }
 
     .tab-btn.active {
@@ -423,11 +409,13 @@
           <input type="hidden" name="form_type" value="login">
           <div class="form-group">
             <label class="form-label">Username</label>
-            <input class="form-input" type="text" name="username" placeholder="Your username" required>
+            <input class="form-input" type="text" name="username" placeholder="Your username"
+              autocomplete="username" autocapitalize="none" autocorrect="off" required>
           </div>
           <div class="form-group">
             <label class="form-label">Password</label>
-            <input class="form-input" type="password" name="password" placeholder="••••••••" required>
+            <input class="form-input" type="password" name="password" placeholder="••••••••"
+              autocomplete="current-password" required>
           </div>
           <button type="submit" class="btn-primary">Sign In →</button>
         </form>
@@ -441,19 +429,23 @@
           {% csrf_token %}
           <div class="form-group">
             <label class="form-label">Username</label>
-            <input class="form-input" type="text" name="username" placeholder="Choose a username" required>
+            <input class="form-input" type="text" name="username" placeholder="Choose a username"
+              autocomplete="username" autocapitalize="none" autocorrect="off" required>
           </div>
           <div class="form-group">
             <label class="form-label">Email</label>
-            <input class="form-input" type="email" name="email" placeholder="your@email.com" required>
+            <input class="form-input" type="email" name="email" placeholder="your@email.com"
+              autocomplete="email" autocapitalize="none" required>
           </div>
           <div class="form-group">
             <label class="form-label">Password</label>
-            <input class="form-input" type="password" name="password1" placeholder="Min 8 characters" required>
+            <input class="form-input" type="password" name="password1" placeholder="Min 8 characters"
+              autocomplete="new-password" required>
           </div>
           <div class="form-group">
             <label class="form-label">Confirm Password</label>
-            <input class="form-input" type="password" name="password2" placeholder="Repeat password" required>
+            <input class="form-input" type="password" name="password2" placeholder="Repeat password"
+              autocomplete="new-password" required>
           </div>
           <button type="submit" class="btn-primary">Create Account →</button>
         </form>
@@ -476,6 +468,7 @@
     function showAuth() {
       document.getElementById('welcomeScreen').style.display = 'none';
       document.getElementById('authScreen').style.display = 'block';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function switchTab(tab) {
