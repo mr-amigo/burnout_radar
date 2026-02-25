@@ -108,3 +108,9 @@ docker-compose.override.yml
 *.zip
 *.tar.gz
 *.rar
+
+
+# Django
+db.sqlite3
+staticfiles/
+media/
