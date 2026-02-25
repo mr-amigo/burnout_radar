@@ -1,0 +1,28 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}BurnoutRadar{% endblock %}</title>
+
+    <!-- Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap"
+        rel="stylesheet">
+
+    <!-- Base styles (variables, reset, shared components) -->
+    <link rel="stylesheet" href="{% static 'core/css/base.css' %}">
+
+    <!-- Page-specific styles -->
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+{% block content %}{% endblock %}
+
+<!-- Page-specific scripts -->
+{% block extra_js %}{% endblock %}
+
+</body>
+</html>

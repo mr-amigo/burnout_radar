@@ -1,0 +1,467 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}BurnoutRadar — Smart productivity + wellness{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'core/css/home.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="app">
+
+    <!-- HEADER -->
+    <header>
+        <div class="logo">
+            <div class="logo-icon">📡</div>
+            <div>
+                <div class="logo-text">BurnoutRadar</div>
+                <div class="logo-sub">Smart burnout prevention</div>
+            </div>
+        </div>
+        <div class="header-right">
+            <span id="headerGreeting" style="font-size:13px;color:var(--text3);"></span>
+            <div class="bell-btn" title="Logout" onclick="logout()">🚪</div>
+            <div class="avatar" id="avatarBtn">?</div>
+        </div>
+    </header>
+
+    <!-- NAV -->
+    <nav>
+        <button class="nav-btn active" onclick="showPage('dashboard')">📊 Dashboard</button>
+        <button class="nav-btn" onclick="showPage('planner')">📅 Daily Planner</button>
+        <button class="nav-btn" onclick="showPage('mood')">💙 Mood & Energy</button>
+        <button class="nav-btn" onclick="showPage('analytics')">📈 Analytics</button>
+    </nav>
+
+    <main>
+
+        <!-- ====== DASHBOARD ====== -->
+        <div class="page active" id="page-dashboard">
+            <div class="grid-3">
+
+                <!-- Burnout Index -->
+                <div class="card">
+                    <div class="card-title">Burnout Index</div>
+                    <div class="burnout-ring">
+                        <div class="ring-wrap">
+                            <svg viewBox="0 0 100 100" width="100" height="100">
+                                <circle class="ring-bg" cx="50" cy="50" r="42"/>
+                                <circle class="ring-fill" id="burnoutRing" cx="50" cy="50" r="42"
+                                        stroke-dasharray="264" stroke-dashoffset="264" stroke="url(#ringGrad)"/>
+                                <defs>
+                                    <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                                        <stop offset="0%"   stop-color="#e8327c"/>
+                                        <stop offset="100%" stop-color="#c026d3"/>
+                                    </linearGradient>
+                                </defs>
+                            </svg>
+                            <div class="ring-center">
+                                <div class="ring-num" id="burnoutNum">45</div>
+                                <div class="ring-label">/ 100</div>
+                            </div>
+                        </div>
+                        <div class="burnout-status" id="burnoutStatusBadge">Moderate</div>
+                    </div>
+                </div>
+
+                <!-- Today's Progress -->
+                <div class="card">
+                    <div class="card-title">Today's Progress</div>
+                    <div class="progress-big" id="progressText">0/0</div>
+                    <div style="font-size:12px;color:var(--text3);">tasks completed</div>
+                    <div class="progress-bar-wrap">
+                        <div class="progress-bar" id="progressBar" style="width:0%"></div>
+                    </div>
+                </div>
+
+                <!-- Today's Status -->
+                <div class="card">
+                    <div class="card-title">Today's Status</div>
+                    <div class="status-rows">
+                        <div class="status-row">
+                            <label>Mood</label>
+                            <div class="dots" id="moodDots">
+                                <div class="dot filled"></div><div class="dot filled"></div>
+                                <div class="dot filled"></div><div class="dot"></div><div class="dot"></div>
+                            </div>
+                        </div>
+                        <div class="status-row">
+                            <label>Energy</label>
+                            <div class="dots" id="energyDots">
+                                <div class="dot filled"></div><div class="dot filled"></div>
+                                <div class="dot filled"></div><div class="dot"></div><div class="dot"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid-2">
+
+                <!-- Today's Tasks -->
+                <div class="card">
+                    <div class="tasks-header">
+                        <span class="tasks-title">Today's Tasks</span>
+                        <button class="btn-add" onclick="openModal('task')">+ Add Task</button>
+                    </div>
+                    <div id="dashTaskList">
+                        <div class="empty-state">
+                            <div class="empty-icon">📝</div>No tasks yet. Add your first task!
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right column -->
+                <div style="display:flex;flex-direction:column;gap:16px;">
+
+                    <!-- Smart Alert -->
+                    <div class="card alert-card">
+                        <div class="alert-icon">✦</div>
+                        <div class="alert-title">Smart Alert</div>
+                        <div class="alert-text" id="smartAlert">Log your mood and energy to get personalized insights.</div>
+                    </div>
+
+                    <!-- Daily Check-in -->
+                    <div class="card">
+                        <div class="card-title">Daily Check-in</div>
+                        <div class="checkin-items">
+                            <div class="checkin-item" onclick="showPage('mood')">
+                                <span class="checkin-icon">💙</span>
+                                <span class="checkin-text">Log your mood</span>
+                            </div>
+                            <div class="checkin-item" onclick="showPage('mood')">
+                                <span class="checkin-icon">⚡</span>
+                                <span class="checkin-text">Rate your energy</span>
+                            </div>
+                            <div class="checkin-item" onclick="showPage('mood')">
+                                <span class="checkin-icon">📝</span>
+                                <span class="checkin-text">Write reflection</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- This Week -->
+                    <div class="card">
+                        <div class="card-title">This Week</div>
+                        <div class="week-summary">
+                            <div class="week-row"><span>Tasks completed</span><span id="weekTasks">0/0</span></div>
+                            <div class="week-row"><span>Avg. energy level</span><span id="weekEnergy">—</span></div>
+                            <div class="week-row"><span>Reflection days</span><span id="weekReflections">0/7</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ====== DAILY PLANNER ====== -->
+        <div class="page" id="page-planner">
+            <div class="planner-header">
+                <div class="planner-date">
+                    <h2>Daily Planner</h2>
+                    <p id="plannerDateDisplay"></p>
+                </div>
+                <div class="planner-actions">
+                    <input type="date" id="plannerDatePicker" onchange="renderPlanner()">
+                    <button class="btn-add" onclick="openModal('task')">+ Add Task</button>
+                </div>
+            </div>
+
+            <div class="planner-layout">
+
+                <!-- Schedule -->
+                <div class="card">
+                    <div style="font-size:13px;font-weight:600;color:var(--text3);margin-bottom:14px;">📋 Schedule</div>
+                    <div id="scheduleList">
+                        <div class="empty-state">
+                            <div class="empty-icon">🗓</div>No tasks for this day. Add some!
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right side -->
+                <div style="display:flex;flex-direction:column;gap:16px;">
+
+                    <!-- Quick Add -->
+                    <div class="card">
+                        <div class="card-title">Quick Add Task</div>
+                        <div class="quick-add">
+                            <input class="form-input" id="quickName" placeholder="Task name...">
+                            <div class="form-row">
+                                <input class="form-input" id="quickTime" type="time" placeholder="Time">
+                                <input class="form-input" id="quickDuration" placeholder="Duration (h)">
+                            </div>
+                            <select class="form-select" id="quickPriority">
+                                <option value="high">High Priority</option>
+                                <option value="medium">Medium Priority</option>
+                                <option value="low">Low Priority</option>
+                            </select>
+                            <select class="form-select" id="quickDifficulty">
+                                <option value="1">Difficulty 1/5</option>
+                                <option value="2">Difficulty 2/5</option>
+                                <option value="3">Difficulty 3/5</option>
+                                <option value="4">Difficulty 4/5</option>
+                                <option value="5">Difficulty 5/5</option>
+                            </select>
+                            <button class="btn-save" onclick="quickAddTask()">Add Task</button>
+                        </div>
+                    </div>
+
+                    <!-- Today's Stats -->
+                    <div class="card">
+                        <div class="card-title">Today's Stats</div>
+                        <div class="stats-grid">
+                            <div class="stat-box"><div class="stat-num" id="statCompletion">0/0</div><div class="stat-lbl">Completion</div></div>
+                            <div class="stat-box"><div class="stat-num" id="statTime">0h</div><div class="stat-lbl">Total Time</div></div>
+                            <div class="stat-box"><div class="stat-num" id="statAvgDiff">0</div><div class="stat-lbl">Avg. Difficulty</div></div>
+                            <div class="stat-box"><div class="stat-num" id="statTasks">0</div><div class="stat-lbl">Tasks</div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ====== MOOD & ENERGY ====== -->
+        <div class="page" id="page-mood">
+            <div style="margin-bottom:24px;">
+                <h2 style="font-family:'DM Serif Display',serif;font-size:28px;">Mood & Energy Tracker</h2>
+                <p style="color:var(--text3);font-size:13px;margin-top:4px;">How are you feeling today?</p>
+            </div>
+
+            <div class="mood-layout">
+                <div>
+                    <!-- Mood Selection -->
+                    <div class="card" style="margin-bottom:16px;">
+                        <div class="mood-section-title">💙 Your Mood</div>
+                        <div class="mood-emojis" id="moodSelector">
+                            <div class="mood-emoji" onclick="selectMood(1)"><span>😞</span><span>Very Low</span></div>
+                            <div class="mood-emoji" onclick="selectMood(2)"><span>😕</span><span>Low</span></div>
+                            <div class="mood-emoji" onclick="selectMood(3)"><span>😐</span><span>Neutral</span></div>
+                            <div class="mood-emoji" onclick="selectMood(4)"><span>🙂</span><span>Good</span></div>
+                            <div class="mood-emoji" onclick="selectMood(5)"><span>😄</span><span>Great</span></div>
+                        </div>
+                    </div>
+
+                    <!-- Energy Sliders -->
+                    <div class="card" style="margin-bottom:16px;">
+                        <div class="energy-slider-wrap">
+                            <div class="energy-label">
+                                <span>⚡ Mental Energy</span>
+                                <span id="mentalVal">60%</span>
+                            </div>
+                            <input type="range" class="slider" id="mentalSlider" min="0" max="100" value="60"
+                                   style="--val:60%" oninput="updateSlider(this,'mentalVal')">
+                            <div class="slider-hints"><span>Exhausted</span><span>Energized</span></div>
+                        </div>
+                        <div style="height:16px;"></div>
+                        <div class="energy-slider-wrap">
+                            <div class="energy-label">
+                                <span>💪 Physical Energy</span>
+                                <span id="physVal">70%</span>
+                            </div>
+                            <input type="range" class="slider" id="physSlider" min="0" max="100" value="70"
+                                   style="--val:70%" oninput="updateSlider(this,'physVal')">
+                            <div class="slider-hints"><span>Drained</span><span>Full of energy</span></div>
+                        </div>
+                    </div>
+
+                    <!-- Reflection -->
+                    <div class="card">
+                        <div class="mood-section-title">📝 Daily Reflection</div>
+                        <textarea class="form-textarea" id="reflectionText"
+                                  placeholder="What's on your mind? How did today go?"></textarea>
+                        <button class="btn-save" style="width:100%;margin-top:12px;" onclick="saveMoodData()">
+                            Save Reflection
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Right Column -->
+                <div style="display:flex;flex-direction:column;gap:16px;">
+
+                    <!-- Physical Monitoring -->
+                    <div class="card">
+                        <div class="card-title">Physical Monitoring</div>
+                        <div class="phys-row">
+                            <div class="phys-item">
+                                <div class="phys-header"><span class="phys-name">😴 Sleep</span><span class="phys-val" id="sleepVal">7h</span></div>
+                                <input type="range" class="slider" id="sleepSlider" min="0" max="12" value="7"
+                                       style="--val:58%" oninput="updatePhys(this,'sleepVal','h','sleepBar',12)">
+                                <div class="phys-bar" style="margin-top:8px;"><div class="phys-bar-fill" id="sleepBar" style="width:58%"></div></div>
+                                <div class="phys-hints"><span>0h</span><span>12h</span></div>
+                            </div>
+                            <div class="phys-item">
+                                <div class="phys-header"><span class="phys-name">💧 Hydration</span><span class="phys-val" id="hydVal">6 glasses</span></div>
+                                <input type="range" class="slider" id="hydSlider" min="0" max="12" value="6"
+                                       style="--val:50%" oninput="updatePhys(this,'hydVal',' glasses','hydBar',12)">
+                                <div class="phys-bar" style="margin-top:8px;"><div class="phys-bar-fill" id="hydBar" style="width:50%"></div></div>
+                                <div class="phys-hints"><span>0</span><span>12+</span></div>
+                            </div>
+                            <div class="phys-item">
+                                <div class="phys-header"><span class="phys-name">📱 Screen Time</span><span class="phys-val" id="screenVal">4h</span></div>
+                                <input type="range" class="slider" id="screenSlider" min="0" max="16" value="4"
+                                       style="--val:25%" oninput="updatePhys(this,'screenVal','h','screenBar',16)">
+                                <div class="phys-bar" style="margin-top:8px;"><div class="phys-bar-fill" id="screenBar" style="width:25%"></div></div>
+                                <div class="phys-hints"><span>0h</span><span>16h+</span></div>
+                            </div>
+                            <div class="phys-item">
+                                <div class="phys-header"><span class="phys-name">🏃 Movement</span><span class="phys-val" id="movVal">30 min</span></div>
+                                <input type="range" class="slider" id="movSlider" min="0" max="120" value="30"
+                                       style="--val:25%" oninput="updatePhys(this,'movVal',' min','movBar',120)">
+                                <div class="phys-bar" style="margin-top:8px;"><div class="phys-bar-fill" id="movBar" style="width:25%"></div></div>
+                                <div class="phys-hints"><span>0 min</span><span>120 min</span></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Week Average -->
+                    <div class="card">
+                        <div class="card-title">This Week's Average</div>
+                        <div class="week-stats">
+                            <div class="week-stat"><div class="week-stat-num" id="wAvgMood">—</div><div class="week-stat-lbl">Avg. Mood</div></div>
+                            <div class="week-stat"><div class="week-stat-num" id="wAvgEnergy">—</div><div class="week-stat-lbl">Mental Energy</div></div>
+                            <div class="week-stat"><div class="week-stat-num" id="wAvgSleep">—</div><div class="week-stat-lbl">Avg. Sleep</div></div>
+                            <div class="week-stat"><div class="week-stat-num" id="wAvgMove">—</div><div class="week-stat-lbl">Avg. Movement</div></div>
+                        </div>
+                    </div>
+
+                    <!-- AI Insights -->
+                    <div class="insight-card" id="aiInsights">
+                        <div class="insight-title">🤖 AI Insights</div>
+                        <div class="insight-item">💡 Save your first check-in to get personalized insights!</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ====== ANALYTICS ====== -->
+        <div class="page" id="page-analytics">
+            <div style="margin-bottom:24px;">
+                <h2 style="font-family:'DM Serif Display',serif;font-size:28px;">Burnout Analytics</h2>
+                <p style="color:var(--text3);font-size:13px;margin-top:4px;">Comprehensive view of your well-being trends</p>
+            </div>
+
+            <!-- Top stats -->
+            <div class="analytics-stats">
+                <div class="astat"><div class="astat-label">Current Index</div><div class="astat-num" id="aCurrentIdx">45</div><div class="astat-sub" id="aIdxChange">This week</div></div>
+                <div class="astat"><div class="astat-label">Avg. Mood</div><div class="astat-num" id="aAvgMood">—</div><div class="astat-sub">Out of 5.0</div></div>
+                <div class="astat"><div class="astat-label">Energy Level</div><div class="astat-num" id="aEnergyLvl">—</div><div class="astat-sub">Week average</div></div>
+                <div class="astat"><div class="astat-label">Workload</div><div class="astat-num" id="aWorkload">—</div><div class="astat-sub" id="aWorkloadH">This week</div></div>
+            </div>
+
+            <!-- Alerts -->
+            <div class="alerts-row" id="analyticsAlerts">
+                <div class="alert-box positive">
+                    <div class="alert-box-title">✅ Positive Trend</div>
+                    <div class="alert-box-text">Start logging your mood and tasks to see personalized analytics and trends.</div>
+                </div>
+                <div class="alert-box warning">
+                    <div class="alert-box-title">⚠️ Watch Out</div>
+                    <div class="alert-box-text">Keep track of your workload to avoid burnout. Consistent logging helps!</div>
+                </div>
+            </div>
+
+            <!-- Charts -->
+            <div class="charts-grid">
+                <div class="chart-card"><div class="chart-title">📊 Weekly Burnout Trend</div><canvas id="burnoutChart" height="140"></canvas></div>
+                <div class="chart-card"><div class="chart-title">📦 Daily Workload (hours)</div><canvas id="workloadChart" height="140"></canvas></div>
+            </div>
+            <div class="chart-card">
+                <div class="chart-title">💙 Mood & Energy Levels</div>
+                <canvas id="moodChart" height="100"></canvas>
+            </div>
+
+            <!-- Burnout gauge -->
+            <div class="card" style="margin-top:16px;display:flex;align-items:center;gap:24px;flex-wrap:wrap;">
+                <div class="burnout-gauge-wrap">
+                    <div class="gauge-ring">
+                        <svg viewBox="0 0 120 120" width="120" height="120">
+                            <circle fill="none" stroke="var(--surface3)" stroke-width="10" cx="60" cy="60" r="50"/>
+                            <circle fill="none" stroke="url(#gGrad)" stroke-width="10" cx="60" cy="60" r="50"
+                                    stroke-dasharray="314" id="gaugeCircle" stroke-dashoffset="314" stroke-linecap="round"/>
+                            <defs>
+                                <linearGradient id="gGrad" x1="0%" y1="0%" x2="100%">
+                                    <stop offset="0%"   stop-color="#e8327c"/>
+                                    <stop offset="100%" stop-color="#f59e0b"/>
+                                </linearGradient>
+                            </defs>
+                        </svg>
+                        <div class="gauge-center">
+                            <div class="gauge-num" id="gaugeNum">45</div>
+                            <div class="gauge-lbl">/ 100</div>
+                        </div>
+                    </div>
+                    <div class="gauge-status" id="gaugeStatus">Moderate</div>
+                </div>
+                <div style="flex:1;">
+                    <div style="font-family:'DM Serif Display',serif;font-size:20px;margin-bottom:8px;">Current Burnout Level</div>
+                    <div style="font-size:13px;color:var(--text2);line-height:1.6;" id="burnoutDescription">
+                        Your burnout level is moderate. Balance your workload and make sure to rest.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<!-- ADD TASK MODAL -->
+<div class="modal-overlay" id="modal-task">
+    <div class="modal">
+        <h3>Add New Task</h3>
+        <div class="form-group">
+            <label>Task Name</label>
+            <input class="form-input" id="taskName" placeholder="e.g. Study for exam...">
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Time</label>
+                <input class="form-input" id="taskTime" type="time">
+            </div>
+            <div class="form-group">
+                <label>Duration (hours)</label>
+                <input class="form-input" id="taskDuration" type="number" step="0.5" min="0.25" max="8" placeholder="e.g. 2">
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Priority</label>
+                <select class="form-select" id="taskPriority">
+                    <option value="high">🔴 High</option>
+                    <option value="medium">🟡 Medium</option>
+                    <option value="low">🟢 Low</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Difficulty (1-5)</label>
+                <select class="form-select" id="taskDifficulty">
+                    <option value="1">1 — Very Easy</option>
+                    <option value="2">2 — Easy</option>
+                    <option value="3">3 — Moderate</option>
+                    <option value="4">4 — Hard</option>
+                    <option value="5">5 — Very Hard</option>
+                </select>
+            </div>
+        </div>
+        <div class="modal-btns">
+            <button class="btn-cancel" onclick="closeModal('task')">Cancel</button>
+            <button class="btn-save"   onclick="addTask()">Add Task</button>
+        </div>
+    </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+    <span class="toast-icon" id="toastIcon">✅</span>
+    <span id="toastMsg">Saved!</span>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Pass Django context to JS cleanly via window variables -->
+<script>
+    window.__USERNAME__   = "{{ user.username }}";
+    window.__LOGOUT_URL__ = "{% url 'logout' %}";
+</script>
+<script src="{% static 'core/js/home.js' %}"></script>
+{% endblock %}

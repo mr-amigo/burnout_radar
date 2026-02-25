@@ -1,0 +1,126 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}BurnoutRadar — Вхід{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'core/css/login.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="particles" id="particles"></div>
+
+<div class="card-wrap">
+
+    <!-- WELCOME SCREEN -->
+    <div class="step-card" id="welcomeScreen">
+        <div class="logo">
+            <div class="logo-icon">📡</div>
+            <div>
+                <div class="logo-text">BurnoutRadar</div>
+                <div class="logo-sub">Smart burnout prevention</div>
+            </div>
+        </div>
+        <div class="welcome-hero">
+            <div class="welcome-icon">📡</div>
+            <h1>Detect Burnout<br><em style="font-style:italic;color:var(--accent)">Before It Hits</em></h1>
+            <p>Your personal wellness tracker that monitors energy, mood, and workload to keep you at your best.</p>
+        </div>
+        <div class="features">
+            <div class="feature">
+                <span class="feature-icon">🎯</span>
+                <span class="feature-text">Smart task planning with burnout prediction</span>
+            </div>
+            <div class="feature">
+                <span class="feature-icon">💙</span>
+                <span class="feature-text">Daily mood & energy tracking with AI insights</span>
+            </div>
+            <div class="feature">
+                <span class="feature-icon">📊</span>
+                <span class="feature-text">Analytics dashboard to spot your patterns</span>
+            </div>
+        </div>
+        <button class="btn-primary" onclick="showAuth()">Get Started →</button>
+    </div>
+
+    <!-- AUTH FORM -->
+    <div class="step-card" id="authScreen" style="display:none;">
+        <div class="logo">
+            <div class="logo-icon">📡</div>
+            <div>
+                <div class="logo-text">BurnoutRadar</div>
+                <div class="logo-sub">Smart burnout prevention</div>
+            </div>
+        </div>
+
+        <div class="tab-row">
+            <button class="tab-btn active" id="tabLogin"    onclick="switchTab('login')">Sign In</button>
+            <button class="tab-btn"        id="tabRegister" onclick="switchTab('register')">Create Account</button>
+        </div>
+
+        <!-- Django form errors -->
+        {% if form.errors %}
+        <div class="error-box">
+            {% for field in form %}
+                {% for error in field.errors %}{{ error }}{% endfor %}
+            {% endfor %}
+            {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- LOGIN -->
+        <div id="loginForm">
+            <div class="login-title">Welcome back 👋</div>
+            <div class="login-sub">Sign in to your BurnoutRadar account.</div>
+            <form method="post" action="{% url 'login' %}">
+                {% csrf_token %}
+                <input type="hidden" name="form_type" value="login">
+                <div class="form-group">
+                    <label class="form-label">Username</label>
+                    <input class="form-input" type="text" name="username" placeholder="Your username" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input class="form-input" type="password" name="password" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="btn-primary">Sign In →</button>
+            </form>
+        </div>
+
+        <!-- REGISTER -->
+        <div id="registerForm" style="display:none;">
+            <div class="login-title">Nice to meet you! 👋</div>
+            <div class="login-sub">Create your BurnoutRadar account.</div>
+            <form method="post" action="{% url 'register' %}">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label class="form-label">Username</label>
+                    <input class="form-input" type="text" name="username" placeholder="Choose a username" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input class="form-input" type="email" name="email" placeholder="your@email.com" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input class="form-input" type="password" name="password1" placeholder="Min 8 characters" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Confirm Password</label>
+                    <input class="form-input" type="password" name="password2" placeholder="Repeat password" required>
+                </div>
+                <button type="submit" class="btn-primary">Create Account →</button>
+            </form>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Pass Django template state to JS
+    window.__HAS_FORM_ERRORS__ = {% if form.errors %}true{% else %}false{% endif %};
+</script>
+<script src="{% static 'core/js/login.js' %}"></script>
+{% endblock %}
