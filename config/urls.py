@@ -8,4 +8,6 @@ urlpatterns = [
     path('login/', views.auth_view, name='login'),
     path('register/', views.auth_view, name='register'),
     path('logout/', views.logout_view, name='logout'),
+    path('api/mood/update/', views.update_mood_api, name='update_mood_api'),
+    path('api/health/update/', views.update_health_api, name='update_health_api')
 ]
