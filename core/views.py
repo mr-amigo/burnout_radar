@@ -96,6 +96,6 @@ def logout_view(request):
     return redirect('login')
 
 
-# @login_required
+@login_required
 def home_view(request):
     return render(request, 'core/home.html')
