@@ -8,4 +8,12 @@ urlpatterns = [
     path('login/', views.auth_view, name='login'),
     path('register/', views.auth_view, name='register'),
     path('logout/', views.logout_view, name='logout'),
+
+    # Tasks
+    path('api/tasks/', views.task_list, name='task_list'),
+    path('api/tasks/add/', views.task_add, name='task_add'),
+    path('api/tasks/<int:task_id>/toggle/',
+         views.task_toggle, name='task_toggle'),
+    path('api/tasks/<int:task_id>/delete/',
+         views.task_delete, name='task_delete'),
 ]

@@ -1959,6 +1959,10 @@
                 <label>Task Name</label>
                 <input class="form-input" id="taskName" placeholder="e.g. Study for exam...">
             </div>
+            <div class="form-group">
+                <label>Date</label>
+                <input class="form-input" id="taskDate" type="date">
+            </div>
             <div class="form-row">
                 <div class="form-group">
                     <label>Time</label>
@@ -2047,109 +2051,123 @@
         // ============================================================
         // TASKS
         // ============================================================
-        function addTask() {
-            const name = document.getElementById('taskName').value.trim();
-            if (!name) { showToast('⚠️', 'Please enter a task name'); return; }
-            const date = document.getElementById('plannerDatePicker').value || todayStr();
-            const task = {
-                id: Date.now(),
-                name,
-                time: document.getElementById('taskTime').value || '09:00',
-                duration: parseFloat(document.getElementById('taskDuration').value) || 1,
-                priority: document.getElementById('taskPriority').value,
-                difficulty: parseInt(document.getElementById('taskDifficulty').value),
-                done: false,
-                date
-            };
-            state.tasks.push(task);
-            saveState();
-            closeModal('task');
-            ['taskName', 'taskTime', 'taskDuration'].forEach(id => document.getElementById(id).value = '');
-            showToast('✅', 'Task added!');
-            renderDashboard(); renderPlanner();
-        }
 
-        function quickAddTask() {
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                document.cookie.split(';').forEach(cookie => {
+                    const c = cookie.trim();
+                    if (c.startsWith(name + '=')) {
+                        cookieValue = decodeURIComponent(c.slice(name.length + 1));
+                    }
+                });
+            }
+            return cookieValue;
+        }
+        const CSRF = getCookie('csrftoken');
+        async function quickAddTask() {
             const name = document.getElementById('quickName').value.trim();
             if (!name) { showToast('⚠️', 'Enter a task name'); return; }
             const date = document.getElementById('plannerDatePicker').value || todayStr();
-            const task = {
-                id: Date.now(),
-                name,
-                time: document.getElementById('quickTime').value || '09:00',
-                duration: parseFloat(document.getElementById('quickDuration').value) || 1,
-                priority: document.getElementById('quickPriority').value,
-                difficulty: parseInt(document.getElementById('quickDifficulty').value),
-                done: false,
-                date
-            };
-            state.tasks.push(task);
-            saveState();
-            document.getElementById('quickName').value = '';
-            document.getElementById('quickTime').value = '';
-            document.getElementById('quickDuration').value = '';
-            showToast('✅', 'Task added!');
-            renderPlanner(); renderDashboard();
+            const start_time = document.getElementById('quickTime').value || '09:00';
+            const duration = parseInt((parseFloat(document.getElementById('quickDuration').value) || 1) * 60);
+            const priority = document.getElementById('quickPriority').value;
+            const difficulty = parseInt(document.getElementById('quickDifficulty').value);
+
+            const res = await fetch('/api/tasks/add/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF },
+                body: JSON.stringify({ title: name, date, start_time, duration, priority, difficulty })
+            });
+            const data = await res.json();
+            if (data.status === 'ok') {
+                document.getElementById('quickName').value = '';
+                document.getElementById('quickTime').value = '';
+                document.getElementById('quickDuration').value = '';
+                showToast('✅', 'Task added!');
+                renderPlanner();
+                await renderDashboard();
+            }
+        }
+        async function addTask() {
+            const title = document.getElementById('taskName').value.trim();
+            const date = document.getElementById('taskDate').value || todayStr();
+            const start_time = document.getElementById('taskTime').value;
+            const duration = parseInt(document.getElementById('taskDuration').value) * 60;
+            const priority = document.getElementById('taskPriority').value;
+            const difficulty = parseInt(document.getElementById('taskDifficulty').value);
+
+            if (!title || !date || !start_time) return;
+
+            const res = await fetch('/api/tasks/add/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF },
+                body: JSON.stringify({ title, date, start_time, duration, priority, difficulty })
+            });
+            const data = await res.json();
+            if (data.status === 'ok') {
+                closeModal('task');
+                renderPlanner();
+                await renderDashboard();
+            }
         }
 
-        function toggleTask(id) {
-            const t = state.tasks.find(t => t.id === id);
-            if (t) { t.done = !t.done; saveState(); recalcBurnout(); renderDashboard(); renderPlanner(); }
+        async function toggleTask(id) {
+            await fetch(`/api/tasks/${id}/toggle/`, {
+                method: 'POST',
+                headers: { 'X-CSRFToken': CSRF }
+            });
+            renderPlanner();
+            await renderDashboard();
         }
 
-        function deleteTask(id) {
-            state.tasks = state.tasks.filter(t => t.id !== id);
-            saveState(); renderDashboard(); renderPlanner();
-            showToast('🗑', 'Task removed');
+        async function deleteTask(id) {
+            await fetch(`/api/tasks/${id}/delete/`, {
+                method: 'POST',
+                headers: { 'X-CSRFToken': CSRF }
+            });
+            renderPlanner();
+            await renderDashboard();
+        }
+
+        async function loadTasks(date) {
+            const res = await fetch(`/api/tasks/?date=${date}`);
+            const data = await res.json();
+            return data.tasks;
         }
 
         // ============================================================
         // DASHBOARD
         // ============================================================
-        function renderDashboard() {
+        async function renderDashboard() {
             const today = todayStr();
-            const todayTasks = state.tasks.filter(t => t.date === today);
-            const done = todayTasks.filter(t => t.done).length;
+            const res = await fetch(`/api/tasks/?date=${today}`);
+            const data = await res.json();
+            const todayTasks = data.tasks;
+            const done = todayTasks.filter(t => t.is_completed).length;
             const total = todayTasks.length;
 
             document.getElementById('progressText').textContent = `${done}/${total}`;
             document.getElementById('progressBar').style.width = total > 0 ? `${Math.round(done / total * 100)}%` : '0%';
 
-            // Burnout ring
-            const bi = calcBurnoutIndex();
-            const circumference = 264;
-            const offset = circumference - (bi / 100) * circumference;
-            document.getElementById('burnoutRing').style.strokeDashoffset = offset;
-            document.getElementById('burnoutNum').textContent = bi;
-            const status = burnoutStatus(bi);
-            document.getElementById('burnoutStatusBadge').textContent = status;
-
-            // Task list
             const el = document.getElementById('dashTaskList');
             if (todayTasks.length === 0) {
                 el.innerHTML = '<div class="empty-state"><div class="empty-icon">📝</div>No tasks yet. Add your first task!</div>';
             } else {
-                el.innerHTML = todayTasks.sort((a, b) => a.time.localeCompare(b.time)).map(t => taskItemHTML(t, false)).join('');
+                el.innerHTML = todayTasks.sort((a, b) => a.start_time.localeCompare(b.start_time)).map(t => `
+            <div class="task-item">
+                <div class="task-check ${t.is_completed ? 'done' : ''}" onclick="toggleTask(${t.id})"></div>
+                <div class="task-info">
+                    <div class="task-name ${t.is_completed ? 'done' : ''}">${t.title}</div>
+                    <div class="task-tags">
+                        <span class="tag ${t.priority}">${t.priority}</span>
+                        <span class="tag diff">Difficulty: ${t.difficulty}/5</span>
+                        <span class="tag diff">${t.start_time.slice(0, 5)} · ${(t.duration / 60).toFixed(1)}h</span>
+                    </div>
+                </div>
+                <button class="task-del" onclick="deleteTask(${t.id})">×</button>
+            </div>`).join('');
             }
-
-            // Status dots
-            const todayLog = getTodayLog();
-            if (todayLog) {
-                renderDots('moodDots', todayLog.mood);
-                renderDots('energyDots', Math.round(todayLog.mental / 20));
-            }
-
-            // Smart alert
-            updateSmartAlert(bi, todayTasks);
-
-            // Week summary
-            const weekTasks = getWeekTasks();
-            const weekDone = weekTasks.filter(t => t.done).length;
-            document.getElementById('weekTasks').textContent = `${weekDone}/${weekTasks.length}`;
-            const energies = state.moodLogs.slice(-7).map(l => l.mental);
-            document.getElementById('weekEnergy').textContent = energies.length > 0 ? `${Math.round(energies.reduce((a, b) => a + b, 0) / energies.length)}%` : '—';
-            const reflDays = state.moodLogs.slice(-7).filter(l => l.reflection && l.reflection.trim()).length;
-            document.getElementById('weekReflections').textContent = `${reflDays}/7`;
         }
 
         function taskItemHTML(t, showTime = true) {
@@ -2184,43 +2202,44 @@
         // ============================================================
         // PLANNER
         // ============================================================
-        function renderPlanner() {
+        async function renderPlanner() {
             const dateVal = document.getElementById('plannerDatePicker').value || todayStr();
             document.getElementById('plannerDatePicker').value = dateVal;
             const d = new Date(dateVal + 'T00:00:00');
             document.getElementById('plannerDateDisplay').textContent = d.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
-            const dayTasks = state.tasks.filter(t => t.date === dateVal)
-                .sort((a, b) => a.time.localeCompare(b.time));
+            const res = await fetch(`/api/tasks/?date=${dateVal}`);
+            const data = await res.json();
+            const dayTasks = data.tasks.sort((a, b) => a.start_time.localeCompare(b.start_time));
 
             const sl = document.getElementById('scheduleList');
             if (dayTasks.length === 0) {
                 sl.innerHTML = '<div class="empty-state"><div class="empty-icon">🗓</div>No tasks for this day. Add some!</div>';
             } else {
                 sl.innerHTML = dayTasks.map(t => `
-      <div class="schedule-item ${t.priority}">
-        <div class="schedule-time">${t.time}<br><span style="font-size:10px;">${t.duration}h</span></div>
-        <div class="schedule-info">
-          <div class="schedule-name ${t.done ? 'done' : ''}" style="${t.done ? 'text-decoration:line-through;color:var(--text3);' : ''}">${t.name}</div>
-          <div class="task-tags" style="margin-top:6px;">
-            <span class="tag ${t.priority}">${t.priority} priority</span>
-            <span class="tag diff">Difficulty: ${t.difficulty}/5</span>
-          </div>
-        </div>
-        <button class="task-check ${t.done ? 'done' : ''}" style="margin-top:0;" onclick="toggleTask(${t.id})"></button>
-        <button class="schedule-del" onclick="deleteTask(${t.id})">×</button>
-      </div>`).join('');
+                <div class="schedule-item ${t.priority}">
+                    <div class="schedule-time">${t.start_time.slice(0, 5)}<br><span style="font-size:10px;">${(t.duration / 60).toFixed(1)}h</span></div>
+                    <div class="schedule-info">
+                        <div class="schedule-name ${t.is_completed ? 'done' : ''}" style="${t.is_completed ? 'text-decoration:line-through;color:var(--text3);' : ''}">${t.title}</div>
+                        <div class="task-tags" style="margin-top:6px;">
+                            <span class="tag ${t.priority}">${t.priority} priority</span>
+                            <span class="tag diff">Difficulty: ${t.difficulty}/5</span>
+                        </div>
+                    </div>
+                    <button class="task-check ${t.is_completed ? 'done' : ''}" style="margin-top:0;" onclick="toggleTask(${t.id})"></button>
+                    <button class="schedule-del" onclick="deleteTask(${t.id})">×</button>
+                </div>`).join('');
             }
 
-            // Stats
-            const done = dayTasks.filter(t => t.done).length;
-            const totalHours = dayTasks.reduce((a, t) => a + t.duration, 0);
+            const done = dayTasks.filter(t => t.is_completed).length;
+            const totalHours = dayTasks.reduce((a, t) => a + t.duration / 60, 0);
             const avgDiff = dayTasks.length > 0 ? (dayTasks.reduce((a, t) => a + t.difficulty, 0) / dayTasks.length).toFixed(1) : 0;
             document.getElementById('statCompletion').textContent = `${done}/${dayTasks.length}`;
             document.getElementById('statTime').textContent = `${totalHours.toFixed(1)}h`;
             document.getElementById('statAvgDiff').textContent = avgDiff;
             document.getElementById('statTasks').textContent = dayTasks.length;
         }
+
 
         // ============================================================
         // MOOD
