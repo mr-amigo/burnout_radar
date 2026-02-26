@@ -1,21 +1,56 @@
 /* ============================================================
-   HOME.JS — Dashboard: state, tasks, mood, analytics, charts
+   HOME.JS — Dashboard: API-based state, tasks, mood, charts
    ============================================================ */
 
-// ── STATE ────────────────────────────────────────────────────
-let state = {
-    tasks: [],
-    moodLogs: [],
-    selectedMood: null
-};
-
-function saveState() {
-    localStorage.setItem('mindfulplanner', JSON.stringify(state));
+// ── HELPERS ──────────────────────────────────────────────────
+function todayStr() {
+    return new Date().toISOString().split('T')[0];
 }
 
-function loadState() {
-    const d = localStorage.getItem('mindfulplanner');
-    if (d) state = JSON.parse(d);
+function getLast7Days() {
+    const days = [];
+    for (let i = 6; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        days.push(d.toISOString().split('T')[0]);
+    }
+    return days;
+}
+
+function getCookie(name) {
+    const val = document.cookie.split(';').map(c => c.trim());
+    for (const c of val) {
+        if (c.startsWith(name + '=')) return decodeURIComponent(c.slice(name.length + 1));
+    }
+    return null;
+}
+
+const CSRF = () => getCookie('csrftoken');
+
+async function apiFetch(url, method = 'GET', body = null) {
+    const opts = {
+        method,
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF() },
+    };
+    if (body) opts.body = JSON.stringify(body);
+    const res = await fetch(url, opts);
+    return res.json();
+}
+
+// ── STATE (in-memory cache) ───────────────────────────────────
+let state = {
+    tasks:        [],
+    moodLogs:     [],
+    selectedMood: null,
+};
+
+async function loadAllData() {
+    const [tasksRes, moodRes] = await Promise.all([
+        apiFetch('/api/tasks/'),
+        apiFetch('/api/mood/'),
+    ]);
+    state.tasks    = tasksRes.tasks   || [];
+    state.moodLogs = moodRes.logs     || [];
 }
 
 // ── NAV ──────────────────────────────────────────────────────
@@ -42,24 +77,24 @@ document.querySelectorAll('.modal-overlay').forEach(m => {
 });
 
 // ── TASKS ────────────────────────────────────────────────────
-function addTask() {
+async function addTask() {
     const name = document.getElementById('taskName').value.trim();
     if (!name) { showToast('⚠️', 'Please enter a task name'); return; }
 
-    const date = document.getElementById('plannerDatePicker').value || todayStr();
     const task = {
-        id: Date.now(),
         name,
+        date:       document.getElementById('plannerDatePicker').value || todayStr(),
         time:       document.getElementById('taskTime').value || '09:00',
         duration:   parseFloat(document.getElementById('taskDuration').value) || 1,
         priority:   document.getElementById('taskPriority').value,
         difficulty: parseInt(document.getElementById('taskDifficulty').value),
-        done: false,
-        date
+        done:       false,
     };
 
+    const res = await apiFetch('/api/tasks/', 'POST', task);
+    task.id = res.id;
     state.tasks.push(task);
-    saveState();
+
     closeModal('task');
     ['taskName', 'taskTime', 'taskDuration'].forEach(id => document.getElementById(id).value = '');
     showToast('✅', 'Task added!');
@@ -67,53 +102,74 @@ function addTask() {
     renderPlanner();
 }
 
-function quickAddTask() {
+async function quickAddTask() {
     const name = document.getElementById('quickName').value.trim();
     if (!name) { showToast('⚠️', 'Enter a task name'); return; }
 
-    const date = document.getElementById('plannerDatePicker').value || todayStr();
     const task = {
-        id: Date.now(),
         name,
+        date:       document.getElementById('plannerDatePicker').value || todayStr(),
         time:       document.getElementById('quickTime').value || '09:00',
         duration:   parseFloat(document.getElementById('quickDuration').value) || 1,
         priority:   document.getElementById('quickPriority').value,
         difficulty: parseInt(document.getElementById('quickDifficulty').value),
-        done: false,
-        date
+        done:       false,
     };
 
+    const res = await apiFetch('/api/tasks/', 'POST', task);
+    task.id = res.id;
     state.tasks.push(task);
-    saveState();
-    document.getElementById('quickName').value   = '';
-    document.getElementById('quickTime').value   = '';
+
+    document.getElementById('quickName').value     = '';
+    document.getElementById('quickTime').value     = '';
     document.getElementById('quickDuration').value = '';
     showToast('✅', 'Task added!');
     renderPlanner();
     renderDashboard();
 }
 
-function toggleTask(id) {
+async function toggleTask(id) {
     const t = state.tasks.find(t => t.id === id);
-    if (t) {
-        t.done = !t.done;
-        saveState();
-        recalcBurnout();
-        renderDashboard();
-        renderPlanner();
-    }
+    if (!t) return;
+    t.done = !t.done;
+    await apiFetch(`/api/tasks/${id}/`, 'PATCH', { done: t.done });
+    renderDashboard();
+    renderPlanner();
+    await updateBurnoutRing(todayStr());
 }
 
-function deleteTask(id) {
+async function deleteTask(id) {
+    await apiFetch(`/api/tasks/${id}/`, 'DELETE');
     state.tasks = state.tasks.filter(t => t.id !== id);
-    saveState();
     renderDashboard();
     renderPlanner();
     showToast('🗑', 'Task removed');
 }
 
+// ── BURNOUT ───────────────────────────────────────────────────
+async function fetchBurnout(date) {
+    const res = await apiFetch(`/api/burnout/?date=${date}`);
+    return res;
+}
+
+async function updateBurnoutRing(date) {
+    const res = await fetchBurnout(date);
+    const bi  = res.index || 0;
+
+    const circumference = 264;
+    const offset = circumference - (bi / 100) * circumference;
+    const ring  = document.getElementById('burnoutRing');
+    const num   = document.getElementById('burnoutNum');
+    const badge = document.getElementById('burnoutStatusBadge');
+    if (ring)  ring.style.strokeDashoffset = offset;
+    if (num)   num.textContent             = bi;
+    if (badge) badge.textContent           = res.level || '—';
+
+    return res;
+}
+
 // ── DASHBOARD ────────────────────────────────────────────────
-function renderDashboard() {
+async function renderDashboard() {
     const today      = todayStr();
     const todayTasks = state.tasks.filter(t => t.date === today);
     const done       = todayTasks.filter(t => t.done).length;
@@ -121,16 +177,15 @@ function renderDashboard() {
 
     document.getElementById('progressText').textContent = `${done}/${total}`;
     document.getElementById('progressBar').style.width  = total > 0
-        ? `${Math.round(done / total * 100)}%`
-        : '0%';
+        ? `${Math.round(done / total * 100)}%` : '0%';
 
     // Burnout ring
-    const bi          = calcBurnoutIndex();
-    const circumference = 264;
-    const offset      = circumference - (bi / 100) * circumference;
-    document.getElementById('burnoutRing').style.strokeDashoffset = offset;
-    document.getElementById('burnoutNum').textContent             = bi;
-    document.getElementById('burnoutStatusBadge').textContent     = burnoutStatus(bi);
+    const burnout = await updateBurnoutRing(today);
+
+    // Smart alert
+    if (burnout.recommendations && burnout.recommendations.length > 0) {
+        document.getElementById('smartAlert').textContent = burnout.recommendations[0];
+    }
 
     // Task list
     const el = document.getElementById('dashTaskList');
@@ -150,9 +205,6 @@ function renderDashboard() {
         renderDots('energyDots', Math.round(todayLog.mental / 20));
     }
 
-    // Smart alert
-    updateSmartAlert(bi, todayTasks);
-
     // Week summary
     const weekTasks = getWeekTasks();
     const weekDone  = weekTasks.filter(t => t.done).length;
@@ -160,8 +212,7 @@ function renderDashboard() {
 
     const energies = state.moodLogs.slice(-7).map(l => l.mental);
     document.getElementById('weekEnergy').textContent = energies.length > 0
-        ? `${Math.round(energies.reduce((a, b) => a + b, 0) / energies.length)}%`
-        : '—';
+        ? `${Math.round(energies.reduce((a, b) => a + b, 0) / energies.length)}%` : '—';
 
     const reflDays = state.moodLogs.slice(-7).filter(l => l.reflection && l.reflection.trim()).length;
     document.getElementById('weekReflections').textContent = `${reflDays}/7`;
@@ -189,21 +240,8 @@ function renderDots(id, val) {
         .join('');
 }
 
-function updateSmartAlert(bi, tasks) {
-    const el = document.getElementById('smartAlert');
-    if (bi >= 70) {
-        el.textContent = '⚠️ High burnout detected. Please rest and reduce workload today.';
-    } else if (bi >= 50) {
-        el.textContent = "You've had intense days recently. Consider taking breaks between tasks today.";
-    } else if (tasks.length > 6) {
-        el.textContent = `⚠️ Heavy workload today (${tasks.reduce((a, t) => a + t.duration, 0).toFixed(1)}h). Remember to take breaks!`;
-    } else {
-        el.textContent = '✅ Your workload looks balanced today. Keep it up!';
-    }
-}
-
 // ── PLANNER ──────────────────────────────────────────────────
-function renderPlanner() {
+async function renderPlanner() {
     const dateVal = document.getElementById('plannerDatePicker').value || todayStr();
     document.getElementById('plannerDatePicker').value = dateVal;
 
@@ -223,8 +261,7 @@ function renderPlanner() {
             <div class="schedule-item ${t.priority}">
                 <div class="schedule-time">${t.time}<br><span style="font-size:10px;">${t.duration}h</span></div>
                 <div class="schedule-info">
-                    <div class="schedule-name ${t.done ? 'done' : ''}"
-                         style="${t.done ? 'text-decoration:line-through;color:var(--text3);' : ''}">${t.name}</div>
+                    <div class="schedule-name" style="${t.done ? 'text-decoration:line-through;color:var(--text3);' : ''}">${t.name}</div>
                     <div class="task-tags" style="margin-top:6px;">
                         <span class="tag ${t.priority}">${t.priority} priority</span>
                         <span class="tag diff">Difficulty: ${t.difficulty}/5</span>
@@ -235,12 +272,10 @@ function renderPlanner() {
             </div>`).join('');
     }
 
-    // Stats
     const doneTasks  = dayTasks.filter(t => t.done).length;
     const totalHours = dayTasks.reduce((a, t) => a + t.duration, 0);
     const avgDiff    = dayTasks.length > 0
-        ? (dayTasks.reduce((a, t) => a + t.difficulty, 0) / dayTasks.length).toFixed(1)
-        : 0;
+        ? (dayTasks.reduce((a, t) => a + t.difficulty, 0) / dayTasks.length).toFixed(1) : 0;
 
     document.getElementById('statCompletion').textContent = `${doneTasks}/${dayTasks.length}`;
     document.getElementById('statTime').textContent       = `${totalHours.toFixed(1)}h`;
@@ -257,37 +292,39 @@ function selectMood(val) {
 }
 
 function updateSlider(el, labelId) {
-    const val = el.value;
-    el.style.setProperty('--val', val + '%');
-    document.getElementById(labelId).textContent = val + '%';
+    el.style.setProperty('--val', el.value + '%');
+    document.getElementById(labelId).textContent = el.value + '%';
 }
 
 function updatePhys(el, labelId, unit, barId, max) {
     const val = parseInt(el.value);
     const pct = Math.round(val / max * 100);
     el.style.setProperty('--val', pct + '%');
-    document.getElementById(labelId).textContent  = val + unit;
-    document.getElementById(barId).style.width    = pct + '%';
+    document.getElementById(labelId).textContent = val + unit;
+    document.getElementById(barId).style.width   = pct + '%';
 }
 
-function saveMoodData() {
+async function saveMoodData() {
     if (!state.selectedMood) { showToast('⚠️', 'Please select your mood first'); return; }
 
     const log = {
-        date:        todayStr(),
-        mood:        state.selectedMood,
-        mental:      parseInt(document.getElementById('mentalSlider').value),
-        physical:    parseInt(document.getElementById('physSlider').value),
-        sleep:       parseInt(document.getElementById('sleepSlider').value),
-        hydration:   parseInt(document.getElementById('hydSlider').value),
-        screenTime:  parseInt(document.getElementById('screenSlider').value),
-        movement:    parseInt(document.getElementById('movSlider').value),
-        reflection:  document.getElementById('reflectionText').value.trim()
+        date:       todayStr(),
+        mood:       state.selectedMood,
+        mental:     parseInt(document.getElementById('mentalSlider').value),
+        physical:   parseInt(document.getElementById('physSlider').value),
+        sleep:      parseInt(document.getElementById('sleepSlider').value),
+        hydration:  parseInt(document.getElementById('hydSlider').value),
+        screenTime: parseInt(document.getElementById('screenSlider').value),
+        movement:   parseInt(document.getElementById('movSlider').value),
+        reflection: document.getElementById('reflectionText').value.trim(),
     };
 
+    await apiFetch('/api/mood/', 'POST', log);
+
+    // Оновлюємо локальний кеш
     state.moodLogs = state.moodLogs.filter(l => l.date !== todayStr());
     state.moodLogs.push(log);
-    saveState();
+
     showToast('✅', 'Mood & energy saved!');
     renderMood();
     renderDashboard();
@@ -314,17 +351,16 @@ function renderMood() {
         document.getElementById('physVal').textContent = todayLog.physical + '%';
         document.getElementById('physSlider').style.setProperty('--val', todayLog.physical + '%');
 
-        set('sleepSlider',   'sleepVal',  todayLog.sleep,      'h',       'sleepBar',  12);
-        set('hydSlider',     'hydVal',    todayLog.hydration,  ' glasses','hydBar',    12);
-        set('screenSlider',  'screenVal', todayLog.screenTime, 'h',       'screenBar', 16);
-        set('movSlider',     'movVal',    todayLog.movement,   ' min',    'movBar',    120);
+        set('sleepSlider',  'sleepVal',  todayLog.sleep,      'h',       'sleepBar',  12);
+        set('hydSlider',    'hydVal',    todayLog.hydration,  ' glasses','hydBar',    12);
+        set('screenSlider', 'screenVal', todayLog.screenTime, 'h',       'screenBar', 16);
+        set('movSlider',    'movVal',    todayLog.movement,   ' min',    'movBar',    120);
 
         if (todayLog.reflection) {
             document.getElementById('reflectionText').value = todayLog.reflection;
         }
     }
 
-    // Week averages
     const logs7 = state.moodLogs.slice(-7);
     if (logs7.length > 0) {
         const avg = arr => arr.reduce((a, b) => a + b, 0) / arr.length;
@@ -341,17 +377,14 @@ function renderAIInsights(log) {
     if (!log) return;
     const insights = [];
 
-    if (log.sleep >= 7)       insights.push('✅ Great sleep duration! Keep it up.');
-    else if (log.sleep < 6)   insights.push('😴 Sleep is below optimal. Try to get 7–8 hours.');
-
-    if (log.screenTime > 8)   insights.push('⚠️ Screen time is high. Consider a digital detox.');
+    if (log.sleep >= 7)        insights.push('✅ Great sleep duration! Keep it up.');
+    else if (log.sleep < 6)    insights.push('😴 Sleep is below optimal. Try to get 7–8 hours.');
+    if (log.screenTime > 8)    insights.push('⚠️ Screen time is high. Consider a digital detox.');
     else if (log.screenTime <= 4) insights.push('✅ Good screen time balance!');
-
-    if (log.hydration < 6)    insights.push(`💧 Try to increase water intake by ${8 - log.hydration} more glasses.`);
-    else                      insights.push('💧 Great hydration today!');
-
-    if (log.movement < 20)    insights.push('🏃 Try to move more — even a 20-min walk helps.');
-    else                      insights.push(`🏃 Good movement today (${log.movement} min)!`);
+    if (log.hydration < 6)     insights.push(`💧 Try to increase water intake by ${8 - log.hydration} more glasses.`);
+    else                       insights.push('💧 Great hydration today!');
+    if (log.movement < 20)     insights.push('🏃 Try to move more — even a 20-min walk helps.');
+    else                       insights.push(`🏃 Good movement today (${log.movement} min)!`);
 
     document.getElementById('aiInsights').innerHTML = `
         <div class="insight-title">🤖 AI Insights</div>
@@ -361,22 +394,23 @@ function renderAIInsights(log) {
 }
 
 // ── ANALYTICS ────────────────────────────────────────────────
-function renderAnalytics() {
-    const bi     = calcBurnoutIndex();
-    const status = burnoutStatus(bi);
+async function renderAnalytics() {
+    const today   = todayStr();
+    const burnout = await fetchBurnout(today);
+    const bi      = burnout.index || 0;
+    const level   = burnout.level || 'Low';
 
     document.getElementById('aCurrentIdx').textContent  = bi;
     document.getElementById('gaugeNum').textContent     = bi;
-    document.getElementById('gaugeStatus').textContent  = status;
+    document.getElementById('gaugeStatus').textContent  = level;
     document.getElementById('gaugeCircle').style.strokeDashoffset = 314 - (bi / 100) * 314;
 
     const descriptions = {
         Low:      'Your burnout level is low. Keep maintaining healthy habits!',
         Moderate: 'Your burnout level is moderate. Balance your workload and rest regularly.',
         High:     'Burnout level is high. Prioritize rest, reduce workload, and seek support.',
-        Critical: 'Critical burnout! Please take immediate action: rest, delegate tasks, and consider professional help.'
     };
-    document.getElementById('burnoutDescription').textContent = descriptions[status] || '';
+    document.getElementById('burnoutDescription').textContent = descriptions[level] || '';
 
     const logs7 = state.moodLogs.slice(-7);
     if (logs7.length > 0) {
@@ -390,27 +424,34 @@ function renderAnalytics() {
 
     const weekTasks = getWeekTasks();
     const totalH    = weekTasks.reduce((a, t) => a + t.duration, 0);
-    document.getElementById('aWorkload').textContent = totalH > 0 ? `${totalH.toFixed(0)}h` : '—';
+    document.getElementById('aWorkload').textContent  = totalH > 0 ? `${totalH.toFixed(0)}h` : '—';
     document.getElementById('aWorkloadH').textContent =
         totalH >= 40 ? 'Heavy this week' :
         totalH >= 20 ? 'Moderate this week' : 'Light this week';
 
-    renderCharts();
+    await renderCharts();
 }
 
 // ── CHARTS ───────────────────────────────────────────────────
 let chartInstances = {};
 
-function renderCharts() {
+async function renderCharts() {
     Object.values(chartInstances).forEach(c => c && typeof c.destroy === 'function' && c.destroy());
 
     const days      = getLast7Days();
     const dayLabels = days.map(d => new Date(d + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short' }));
 
-    const burnoutData  = days.map(d => calcBurnoutForDate(d));
-    const workloadData = days.map(d => state.tasks.filter(t => t.date === d).reduce((a, t) => a + t.duration, 0));
-    const moodData     = days.map(d => { const l = state.moodLogs.find(l => l.date === d); return l ? l.mood * 20 : null; });
-    const energyData   = days.map(d => { const l = state.moodLogs.find(l => l.date === d); return l ? l.mental   : null; });
+    // Burnout per day
+    const burnoutData = await Promise.all(days.map(async d => {
+        const res = await fetchBurnout(d);
+        return res.index || 0;
+    }));
+
+    const workloadData = days.map(d =>
+        state.tasks.filter(t => t.date === d).reduce((a, t) => a + t.duration, 0)
+    );
+    const moodData   = days.map(d => { const l = state.moodLogs.find(l => l.date === d); return l ? l.mood * 20 : null; });
+    const energyData = days.map(d => { const l = state.moodLogs.find(l => l.date === d); return l ? l.mental   : null; });
 
     chartInstances.burnout  = drawBarChart('burnoutChart',  dayLabels, burnoutData,  '#e8327c', 100);
     chartInstances.workload = drawBarChart('workloadChart', dayLabels, workloadData, '#c026d3', 12);
@@ -425,25 +466,23 @@ function drawBarChart(canvasId, labels, data, color, max) {
     canvas.width = W; canvas.height = H;
     ctx.clearRect(0, 0, W, H);
 
-    const pad   = { left: 30, right: 10, top: 10, bottom: 24 };
+    const pad    = { left: 30, right: 10, top: 10, bottom: 24 };
     const chartW = W - pad.left - pad.right;
     const chartH = H - pad.top  - pad.bottom;
-    const barW  = chartW / labels.length * 0.6;
-    const gap   = chartW / labels.length;
+    const barW   = chartW / labels.length * 0.6;
+    const gap    = chartW / labels.length;
 
-    // Grid lines
     ctx.strokeStyle = 'rgba(255,255,255,0.06)';
     ctx.lineWidth   = 1;
     for (let i = 0; i <= 4; i++) {
         const y = pad.top + chartH - (i / 4) * chartH;
         ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(W - pad.right, y); ctx.stroke();
-        ctx.fillStyle  = 'rgba(255,255,255,0.3)';
-        ctx.font       = '10px DM Sans';
-        ctx.textAlign  = 'right';
+        ctx.fillStyle = 'rgba(255,255,255,0.3)';
+        ctx.font      = '10px DM Sans';
+        ctx.textAlign = 'right';
         ctx.fillText(Math.round(max * i / 4), pad.left - 4, y + 4);
     }
 
-    // Bars
     const grad = ctx.createLinearGradient(0, pad.top, 0, pad.top + chartH);
     grad.addColorStop(0, color);
     grad.addColorStop(1, color + '33');
@@ -481,7 +520,6 @@ function drawLineChart(canvasId, labels, data1, data2) {
     const n      = labels.length;
     const step   = chartW / (n - 1 || 1);
 
-    // Grid
     ctx.strokeStyle = 'rgba(255,255,255,0.06)';
     ctx.lineWidth   = 1;
     for (let i = 0; i <= 4; i++) {
@@ -490,9 +528,8 @@ function drawLineChart(canvasId, labels, data1, data2) {
     }
 
     function drawLine(data, color) {
-        const pts   = data.map((v, i) => [pad.left + i * step, pad.top + chartH * (1 - (v || 0) / 100)]);
-        const valid = pts.filter((_, i) => data[i] !== null);
-        if (valid.length < 2) return;
+        const pts = data.map((v, i) => [pad.left + i * step, pad.top + chartH * (1 - (v || 0) / 100)]);
+        if (pts.filter((_, i) => data[i] !== null).length < 2) return;
 
         ctx.beginPath();
         ctx.strokeStyle = color;
@@ -524,57 +561,7 @@ function drawLineChart(canvasId, labels, data1, data2) {
     return { destroy: () => {} };
 }
 
-// ── BURNOUT CALC ─────────────────────────────────────────────
-function calcBurnoutIndex() {
-    return calcBurnoutForDate(todayStr());
-}
-
-function calcBurnoutForDate(date) {
-    const dayTasks = state.tasks.filter(t => t.date === date);
-    const log      = state.moodLogs.find(l => l.date === date);
-
-    let score = 30;
-    const hours = dayTasks.reduce((a, t) => a + t.duration, 0);
-    score += Math.min(hours * 3, 30);
-
-    if (dayTasks.length > 0) {
-        const avgDiff = dayTasks.reduce((a, t) => a + t.difficulty, 0) / dayTasks.length;
-        score += avgDiff * 3;
-    }
-
-    if (log) {
-        score -= (log.mood - 3) * 5;
-        score -= (log.mental - 50) * 0.2;
-        if (log.sleep >= 7) score -= 5;
-        else if (log.sleep < 6) score += 8;
-        if (log.movement >= 30) score -= 4;
-    }
-
-    return Math.max(0, Math.min(100, Math.round(score)));
-}
-
-function burnoutStatus(n) {
-    if (n < 30) return 'Low';
-    if (n < 55) return 'Moderate';
-    if (n < 75) return 'High';
-    return 'Critical';
-}
-
 // ── HELPERS ──────────────────────────────────────────────────
-function todayStr() {
-    return new Date().toISOString().split('T')[0];
-}
-
-function getLast7Days() {
-    const days = [];
-    for (let i = 6; i >= 0; i--) {
-        const d = new Date();
-        d.setDate(d.getDate() - i);
-        days.push(d.toISOString().split('T')[0]);
-    }
-    return days;
-}
-
 function getWeekTasks() {
     const days = getLast7Days();
     return state.tasks.filter(t => days.includes(t.date));
@@ -582,18 +569,6 @@ function getWeekTasks() {
 
 function getTodayLog() {
     return state.moodLogs.find(l => l.date === todayStr()) || null;
-}
-
-function recalcBurnout() {
-    const bi          = calcBurnoutIndex();
-    const circumference = 264;
-    const offset      = circumference - (bi / 100) * circumference;
-    const ring  = document.getElementById('burnoutRing');
-    const num   = document.getElementById('burnoutNum');
-    const badge = document.getElementById('burnoutStatusBadge');
-    if (ring)  ring.style.strokeDashoffset = offset;
-    if (num)   num.textContent             = bi;
-    if (badge) badge.textContent           = burnoutStatus(bi);
 }
 
 // ── TOAST ────────────────────────────────────────────────────
@@ -605,34 +580,24 @@ function showToast(icon, msg) {
     setTimeout(() => t.classList.remove('show'), 2500);
 }
 
-// ── USER / AUTH ───────────────────────────────────────────────
+// ── USER ─────────────────────────────────────────────────────
 function loadUser() {
-    // username is injected via Django template tag — see home.html
     const username = window.__USERNAME__ || '?';
     const initial  = username[0].toUpperCase();
-    document.getElementById('avatarBtn').textContent       = initial;
-    document.getElementById('headerGreeting').textContent  = `Hi, ${username}!`;
+    document.getElementById('avatarBtn').textContent      = initial;
+    document.getElementById('headerGreeting').textContent = `Hi, ${username}!`;
 }
 
 function logout() {
     window.location.href = window.__LOGOUT_URL__;
 }
 
-// ── INIT ──────────────────────────────────────────────────────
-function init() {
+// ── INIT ─────────────────────────────────────────────────────
+async function init() {
     loadUser();
-    loadState();
     document.getElementById('plannerDatePicker').value = todayStr();
-
-    setTimeout(() => {
-        const bi     = calcBurnoutIndex();
-        const offset = 264 - (bi / 100) * 264;
-        document.getElementById('burnoutRing').style.strokeDashoffset = offset;
-        document.getElementById('burnoutNum').textContent             = bi;
-        document.getElementById('burnoutStatusBadge').textContent     = burnoutStatus(bi);
-    }, 200);
-
-    renderDashboard();
+    await loadAllData();
+    await renderDashboard();
 
     window.addEventListener('resize', () => {
         if (document.getElementById('page-analytics').classList.contains('active')) {
