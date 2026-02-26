@@ -1775,7 +1775,8 @@
                                         <span class="phys-val" id="sleepVal">7h</span>
                                     </div>
                                     <input type="range" class="slider" id="sleepSlider" min="0" max="12" value="7"
-                                        style="--val:58%" oninput="updatePhys(this,'sleepVal','h','sleepBar',12)" onchange="saveHealthData()">
+                                        style="--val:58%" oninput="updatePhys(this,'sleepVal','h','sleepBar',12)"
+                                        onchange="saveHealthData()">
                                     <div class="phys-bar" style="margin-top:8px;">
                                         <div class="phys-bar-fill" id="sleepBar" style="width:58%"></div>
                                     </div>
@@ -1786,8 +1787,10 @@
                                         <span class="phys-name">💧 Hydration</span>
                                         <span class="phys-val" id="hydVal">6 glasses</span>
                                     </div>
-                                    <input type="range" class="slider" id="hydSlider" min<input type="range" class="slider" id="hydSlider" min="0" max="12" value="6"="0" max="12" value="6"
-                                        style="--val:50%" oninput="updatePhys(this,'hydVal',' glasses','hydBar',12)" onchange="saveHealthData()">
+                                    <input type="range" class="slider" id="hydSlider" min<input type="range"
+                                        class="slider" id="hydSlider" min="0" max="12" value="6"="0" max="12" value="6"
+                                        style="--val:50%" oninput="updatePhys(this,'hydVal',' glasses','hydBar',12)"
+                                        onchange="saveHealthData()">
                                     <div class="phys-bar" style="margin-top:8px;">
                                         <div class="phys-bar-fill" id="hydBar" style="width:50%"></div>
                                     </div>
@@ -1799,7 +1802,8 @@
                                         <span class="phys-val" id="screenVal">4h</span>
                                     </div>
                                     <input type="range" class="slider" id="screenSlider" min="0" max="16" value="4"
-                                        style="--val:25%" oninput="updatePhys(this,'screenVal','h','screenBar',16)" onchange="saveHealthData()">
+                                        style="--val:25%" oninput="updatePhys(this,'screenVal','h','screenBar',16)"
+                                        onchange="saveHealthData()">
                                     <div class="phys-bar" style="margin-top:8px;">
                                         <div class="phys-bar-fill" id="screenBar" style="width:25%"></div>
                                     </div>
@@ -1811,7 +1815,8 @@
                                         <span class="phys-val" id="movVal">30 min</span>
                                     </div>
                                     <input type="range" class="slider" id="movSlider" min="0" max="120" value="30"
-                                        style="--val:25%" oninput="updatePhys(this,'movVal',' min','movBar',120)" onchange="saveHealthData()">
+                                        style="--val:25%" oninput="updatePhys(this,'movVal',' min','movBar',120)"
+                                        onchange="saveHealthData()">
                                     <div class="phys-bar" style="margin-top:8px;">
                                         <div class="phys-bar-fill" id="movBar" style="width:25%"></div>
                                     </div>
@@ -2292,13 +2297,35 @@
 
                 if (response.ok) {
                     console.log("Настрій успішно збережено в базу Django!");
+
+                    const reflectionText = document.getElementById('reflectionText').value.trim();
+                    if (reflectionText) {
+                        await fetch('/api/reflection/save/', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
+                            body: JSON.stringify({ text: reflectionText })
+                        });
+                    }
+
+                    await loadInsights();
+                    showToast('✅', 'Mood & reflection saved!');
                 } else {
                     console.error("Помилка від сервера", await response.text());
                 }
             } catch (error) {
-                console.error ("Помилка мережі:", error);
+                console.error("Помилка мережі:", error);
             }
         }
+
+        async function loadInsights() {
+            const res = await fetch('/api/insights/');
+            const data = await res.json();
+            const el = document.getElementById('smartAlert');
+            if (el && data.insights.length > 0) {
+                el.innerHTML = data.insights.map(i => `<div style="margin-bottom:6px;">${i}</div>`).join('');
+            }
+        }
+
         async function saveHealthData() {
             const sleep = parseFloat(document.getElementById('sleepSlider').value) || 0;
             const glassesOfWater = parseInt(document.getElementById('hydSlider').value) || 0;
@@ -2692,34 +2719,34 @@
         // ============================================================
         function loadDjangoData() {
             {% if today_mood %}
-                selectMood({{ today_mood.mood }});
+            selectMood({{ today_mood.mood }});
 
-                const mental = document.getElementById('mentalSlider');
-                mental.value = {{ today_mood.mental_energy }};
-                updateSlider(mental, 'mentalVal');
+        const mental = document.getElementById('mentalSlider');
+        mental.value = {{ today_mood.mental_energy }};
+        updateSlider(mental, 'mentalVal');
 
-                const phys = document.getElementById('physSlider');
-                phys.value = {{ today_mood.physical_energy }};
-                updateSlider(phys, 'physVal');
-            {% endif %}
+        const phys = document.getElementById('physSlider');
+        phys.value = {{ today_mood.physical_energy }};
+        updateSlider(phys, 'physVal');
+        {% endif %}
 
-            {% if today_health %}
-                const sleep = document.getElementById('sleepSlider');
-                sleep.value = parseFloat("{{ today_health.sleep_hours }}".replace(',', '.'));
-                updatePhys(sleep, 'sleepVal', 'h', 'sleepBar', 12);
+        {% if today_health %}
+        const sleep = document.getElementById('sleepSlider');
+        sleep.value = parseFloat("{{ today_health.sleep_hours }}".replace(',', '.'));
+        updatePhys(sleep, 'sleepVal', 'h', 'sleepBar', 12);
 
-                const hyd = document.getElementById('hydSlider');
-                hyd.value = Math.round({{ today_health.water_ml }} / 250);
-                updatePhys(hyd, 'hydVal', ' glasses', 'hydBar', 12);
+        const hyd = document.getElementById('hydSlider');
+        hyd.value = Math.round({{ today_health.water_ml }} / 250);
+        updatePhys(hyd, 'hydVal', ' glasses', 'hydBar', 12);
 
-                const screen = document.getElementById('screenSlider');
-                screen.value = parseFloat("{{ today_health.screen_time }}".replace(',', '.'));
-                updatePhys(screen, 'screenVal', 'h', 'screenBar', 16);
+        const screen = document.getElementById('screenSlider');
+        screen.value = parseFloat("{{ today_health.screen_time }}".replace(',', '.'));
+        updatePhys(screen, 'screenVal', 'h', 'screenBar', 16);
 
-                const mov = document.getElementById('movSlider');
-                mov.value = Math.round({{ today_health.steps }} / 100);
-                updatePhys(mov, 'movVal', ' min', 'movBar', 120);
-            {% endif %}
+        const mov = document.getElementById('movSlider');
+        mov.value = Math.round({{ today_health.steps }} / 100);
+        updatePhys(mov, 'movVal', ' min', 'movBar', 120);
+        {% endif %}
         }
 
         function init() {
@@ -2737,6 +2764,7 @@
                 document.getElementById('burnoutStatusBadge').textContent = burnoutStatus(bi);
             }, 200);
             renderDashboard();
+            loadInsights();
 
             // Handle window resize for charts
             window.addEventListener('resize', () => {

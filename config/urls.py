@@ -16,6 +16,10 @@ urlpatterns = [
          views.task_toggle, name='task_toggle'),
     path('api/tasks/<int:task_id>/delete/',
          views.task_delete, name='task_delete'),
-    path('api/mood/update/', views.update_mood_api, name='update_mood_api'), # mood
-    path('api/health/update/', views.update_health_api, name='update_health_api') # health
+    path('api/mood/update/', views.update_mood_api,
+         name='update_mood_api'),  # mood
+    path('api/health/update/', views.update_health_api,
+         name='update_health_api'),  # health
+    path('api/reflection/save/', views.save_reflection, name='save_reflection'),
+    path('api/insights/', views.ai_insights, name='ai_insights'),
 ]

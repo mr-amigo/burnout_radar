@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.utils import timezone
-from .models import MoodEntry, HealthLog
+from .models import Task, HealthLog, MoodEntry, Reflection
 from .forms import Task, RegisterForm, MoodForm, HealthLogForm, TaskForm
 from datetime import date
 import json
@@ -45,6 +45,7 @@ def logout_view(request):
 @login_required
 def home_view(request):
     return render(request, 'home.html')
+
 
 @login_required
 @require_POST
@@ -106,6 +107,7 @@ def update_mood_api(request):
         return JsonResponse({'status': 'success', 'created': created})
     return JsonResponse({'status': 'error'}, status=400)
 
+
 @login_required
 def update_health_api(request):
     if request.method == 'POST':
@@ -126,15 +128,108 @@ def update_health_api(request):
         return JsonResponse({'status': 'success', 'created': created})
     return JsonResponse({'status': 'error'}, status=400)
 
+
 @login_required
 def home_view(request):
     today = date.today()
 
-    today_mood = MoodEntry.objects.filter(user=request.user, date=today).first()
-    today_health = HealthLog.objects.filter(user=request.user, date=today).first()
+    today_mood = MoodEntry.objects.filter(
+        user=request.user, date=today).first()
+    today_health = HealthLog.objects.filter(
+        user=request.user, date=today).first()
 
     context = {
         'today_mood': today_mood,
         'today_health': today_health,
     }
     return render(request, 'home.html', context)
+
+
+@login_required
+@require_POST
+def save_reflection(request):
+    data = json.loads(request.body)
+    text = data.get('text', '').strip()
+    today = timezone.now().date()
+    Reflection.objects.update_or_create(
+        user=request.user, date=today,
+        defaults={'text': text}
+    )
+    return JsonResponse({'status': 'ok'})
+
+
+@login_required
+def ai_insights(request):
+    today = timezone.now().date()
+    insights = []
+
+    try:
+        health = HealthLog.objects.get(user=request.user, date=today)
+
+        if health.sleep_hours < 4:
+            insights.append(
+                "😴 You slept less than 4 hours — this is the leading cause of exhaustion. Try to go to bed earlier tonight.")
+        elif health.sleep_hours < 6:
+            insights.append(
+                "🌙 Sleep deficit increases burnout risk. Aim for 7–8 hours per night.")
+
+        if health.screen_time > 8:
+            insights.append(
+                "📱 Your screen time is significantly above normal. Try a digital detox in the evening.")
+        elif health.screen_time > 4:
+            insights.append(
+                "📱 Screen time is above recommended levels. Try taking breaks every 2 hours.")
+
+        if health.steps < 3000:
+            insights.append(
+                "🏃 Very little movement today. Even a 15-minute walk can significantly reduce stress.")
+
+        if health.water_ml < 1000:
+            insights.append(
+                "💧 Critically low water intake. Dehydration worsens focus and mood.")
+        elif health.water_ml < 1500:
+            insights.append(
+                "💧 Not enough water today. Aim for at least 2 liters per day.")
+
+    except HealthLog.DoesNotExist:
+        insights.append("📊 Log your health data to get personalized insights.")
+
+    try:
+        mood = MoodEntry.objects.get(user=request.user, date=today)
+
+        if mood.mood <= 2:
+            insights.append(
+                "💙 Your mood is very low today. Try a short gratitude practice or talk to a friend.")
+
+        if mood.mental_energy <= 3:
+            insights.append(
+                "🧠 Low mental energy. Avoid complex tasks and prioritize rest.")
+
+        if mood.physical_energy <= 3:
+            insights.append(
+                "⚡ Low physical energy. Light exercise or a short nap might help.")
+
+    except MoodEntry.DoesNotExist:
+        insights.append("💙 Log your mood to get personalized insights.")
+
+    try:
+        tasks = Task.objects.filter(user=request.user, date=today)
+        total = tasks.count()
+        completed = tasks.filter(is_completed=True).count()
+        if total > 0:
+            incomplete_ratio = (total - completed) / total
+            if incomplete_ratio > 0.7:
+                insights.append(
+                    "✅ More than 70% of tasks incomplete. Try breaking them into smaller steps.")
+            total_hours = sum(t.duration for t in tasks) / 60
+            if total_hours > 8:
+                insights.append(
+                    "⚠️ Heavy workload today (8+ hours of tasks). Plan breaks every 90 minutes.")
+    except:
+        pass
+
+    if not insights:
+        insights.append(
+            "✨ Great day! All indicators are in the normal range. Keep it up!")
+
+    return JsonResponse({'insights': insights})
