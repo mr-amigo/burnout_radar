@@ -2458,30 +2458,15 @@
         }
 
         let chartInstances = {};
-        function renderCharts() {
-            // Destroy old charts
+        async function renderCharts() {
             Object.values(chartInstances).forEach(c => c && typeof c.destroy === 'function' && c.destroy());
 
-            const days = getLast7Days();
-            const dayLabels = days.map(d => {
-                const dt = new Date(d + 'T00:00:00');
-                return dt.toLocaleDateString('en-US', { weekday: 'short' });
-            });
+            const res = await fetch('/api/analytics/');
+            const data = await res.json();
 
-            // Burnout trend
-            const burnoutData = days.map(d => calcBurnoutForDate(d));
-            chartInstances.burnout = drawBarChart('burnoutChart', dayLabels, burnoutData, '#e8327c', 100);
-
-            // Workload
-            const workloadData = days.map(d => {
-                return state.tasks.filter(t => t.date === d).reduce((a, t) => a + t.duration, 0);
-            });
-            chartInstances.workload = drawBarChart('workloadChart', dayLabels, workloadData, '#c026d3', 12);
-
-            // Mood & Energy
-            const moodData = days.map(d => { const l = state.moodLogs.find(l => l.date === d); return l ? l.mood * 20 : null; });
-            const energyData = days.map(d => { const l = state.moodLogs.find(l => l.date === d); return l ? l.mental : null; });
-            chartInstances.mood = drawLineChart('moodChart', dayLabels, moodData, energyData);
+            chartInstances.burnout = drawBarChart('burnoutChart', data.labels, data.burnout, '#e8327c', 100);
+            chartInstances.workload = drawBarChart('workloadChart', data.labels, data.workload, '#c026d3', 12);
+            chartInstances.mood = drawLineChart('moodChart', data.labels, data.mood, data.energy);
         }
 
         function drawBarChart(canvasId, labels, data, color, max) {

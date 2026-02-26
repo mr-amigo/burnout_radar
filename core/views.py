@@ -6,7 +6,7 @@ from django.views.decorators.http import require_POST
 from django.utils import timezone
 from .models import Task, HealthLog, MoodEntry, Reflection
 from .forms import Task, RegisterForm, MoodForm, HealthLogForm, TaskForm
-from datetime import date
+from datetime import date, timedelta
 import json
 
 
@@ -233,3 +233,51 @@ def ai_insights(request):
             "✨ Great day! All indicators are in the normal range. Keep it up!")
 
     return JsonResponse({'insights': insights})
+
+
+
+@login_required
+def analytics_data(request):
+    today = timezone.now().date()
+    labels = []
+    burnout_data = []
+    workload_data = []
+    mood_data = []
+    energy_data = []
+
+    for i in range(6, -1, -1):
+        day = today - timedelta(days=i)
+        labels.append(day.strftime('%a'))  # Mon, Tue...
+
+        # Tasks
+        tasks = Task.objects.filter(user=request.user, date=day)
+        total_hours = sum(t.duration for t in tasks) / 60 if tasks.exists() else 0
+        workload_data.append(round(total_hours, 1))
+
+        # Mood
+        try:
+            mood = MoodEntry.objects.get(user=request.user, date=day)
+            mood_data.append(mood.mood)
+            energy_data.append(round((mood.mental_energy + mood.physical_energy) / 2, 1))
+        except MoodEntry.DoesNotExist:
+            mood_data.append(None)
+            energy_data.append(None)
+
+        # Burnout — простий розрахунок
+        try:
+            health = HealthLog.objects.get(user=request.user, date=day)
+            sleep_risk = max(0, 8 - health.sleep_hours) * 4
+        except HealthLog.DoesNotExist:
+            sleep_risk = 20  # середнє якщо немає даних
+
+        mood_risk = (5 - mood_data[-1]) * 8 if mood_data[-1] else 24
+        bi = min(100, max(0, round(sleep_risk + mood_risk + workload_data[-1] * 2)))
+        burnout_data.append(bi)
+
+    return JsonResponse({
+        'labels': labels,
+        'burnout': burnout_data,
+        'workload': workload_data,
+        'mood': mood_data,
+        'energy': energy_data,
+    })

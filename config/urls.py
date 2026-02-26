@@ -22,4 +22,5 @@ urlpatterns = [
          name='update_health_api'),  # health
     path('api/reflection/save/', views.save_reflection, name='save_reflection'),
     path('api/insights/', views.ai_insights, name='ai_insights'),
+    path('api/analytics/', views.analytics_data, name='analytics_data')
 ]
