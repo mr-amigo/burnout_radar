@@ -279,8 +279,8 @@ def analytics_data(request):
             mood_data.append(mood_entry.mood)
             energy_data.append(round((mood_entry.mental_energy + mood_entry.physical_energy) / 2, 1))
             mood_score = (3 - mood_entry.mood) * 8
-            mental_score = 10 if mood_entry.mental_energy < 40 else (-8 if mood_entry.mental_energy > 70 else 0)
-            physical_score = 6 if mood_entry.physical_energy < 40 else (-4 if mood_entry.physical_energy > 70 else 0)
+            mental_score = 10 if mood_entry.mental_energy <= 3 else (-8 if mood_entry.mental_energy >= 8 else 0)
+            physical_score = 6 if mood_entry.physical_energy <= 3 else (-4 if mood_entry.physical_energy >= 8 else 0)
         except MoodEntry.DoesNotExist:
             mood_data.append(None)
             energy_data.append(None)
