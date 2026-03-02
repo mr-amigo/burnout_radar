@@ -5,7 +5,7 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.utils import timezone
 from .models import Task, HealthLog, MoodEntry, Reflection
-from .forms import Task, RegisterForm, MoodForm, HealthLogForm, TaskForm
+from .forms import RegisterForm, MoodForm, HealthLogForm, TaskForm
 from datetime import date, timedelta
 import json
 
@@ -13,7 +13,10 @@ import json
 def auth_view(request):
     if request.user.is_authenticated:
         return redirect('home')
+
+    login_error = None
     login_form = None
+
     if request.method == 'POST':
         form_type = request.POST.get('form_type')
         if form_type == 'login':
@@ -24,28 +27,19 @@ def auth_view(request):
                 login(request, user)
                 return redirect('home')
             else:
-                login_form = {'errors': True,
-                              'message': 'Невірний логін або пароль'}
+                login_error = 'Invalid username or password'
         elif form_type is None:
-            form = RegisterForm(request.POST)
-            if form.is_valid():
-                user = form.save()
+            login_form = RegisterForm(request.POST)
+            if login_form.is_valid():
+                user = login_form.save()
                 login(request, user)
                 return redirect('home')
-            else:
-                login_form = form
-    return render(request, 'login.html', {'form': login_form})
 
+    return render(request, 'login.html', {'form': login_form, 'login_error': login_error})
 
 def logout_view(request):
     logout(request)
     return redirect('login')
-
-
-@login_required
-def home_view(request):
-    return render(request, 'home.html')
-
 
 @login_required
 @require_POST
@@ -270,7 +264,7 @@ def analytics_data(request):
         except HealthLog.DoesNotExist:
             sleep_risk = 20  # середнє якщо немає даних
 
-        mood_risk = (5 - mood_data[-1]) * 8 if mood_data[-1] else 24
+        mood_risk = (5 - mood_data[-1]) * 8 if mood_data[-1] is not None else 24
         bi = min(100, max(0, round(sleep_risk + mood_risk + workload_data[-1] * 2)))
         burnout_data.append(bi)
 

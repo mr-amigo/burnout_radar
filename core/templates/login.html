@@ -404,7 +404,10 @@
         <button class="tab-btn" id="tabRegister" onclick="switchTab('register')">Create Account</button>
       </div>
 
-      <!-- Django повідомлення про помилки -->
+      {% if login_error %}
+      <div class="error-box">{{ login_error }}</div>
+      {% endif %}
+
       {% if form.errors %}
       <div class="error-box">
         {% for field in form %}
@@ -494,6 +497,10 @@
 
     // Якщо є помилки — одразу показати форму
     {% if form.errors %}
+    showAuth();
+    {% endif %}
+
+    {% if login_error %}
     showAuth();
     {% endif %}
   </script>
