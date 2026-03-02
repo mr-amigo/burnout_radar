@@ -34,7 +34,6 @@ def auth_view(request):
                 user = login_form.save()
                 login(request, user)
                 return redirect('home')
-
     return render(request, 'login.html', {'form': login_form, 'login_error': login_error})
 
 def logout_view(request):
@@ -229,7 +228,6 @@ def ai_insights(request):
     return JsonResponse({'insights': insights})
 
 
-
 @login_required
 def analytics_data(request):
     today = timezone.now().date()
@@ -241,31 +239,60 @@ def analytics_data(request):
 
     for i in range(6, -1, -1):
         day = today - timedelta(days=i)
-        labels.append(day.strftime('%a'))  # Mon, Tue...
+        labels.append(day.strftime('%a'))
 
-        # Tasks
-        tasks = Task.objects.filter(user=request.user, date=day)
-        total_hours = sum(t.duration for t in tasks) / 60 if tasks.exists() else 0
+        task_list = list(Task.objects.filter(user=request.user, date=day))
+        total_hours = sum(t.duration for t in task_list) / 60
         workload_data.append(round(total_hours, 1))
 
-        # Mood
+        if task_list:
+            avg_difficulty = sum(t.difficulty for t in task_list) / len(task_list)
+            difficulty_weight = 1.0 + (avg_difficulty - 1) * 0.125
+            workload_score = min(35, total_hours * difficulty_weight * 4.5)
+            completed_count = sum(1 for t in task_list if t.is_completed)
+            task_pressure = 5 if (completed_count / len(task_list) < 0.5 and avg_difficulty > 3) else 0
+        else:
+            workload_score = 0
+            task_pressure = 0
+
         try:
-            mood = MoodEntry.objects.get(user=request.user, date=day)
-            mood_data.append(mood.mood)
-            energy_data.append(round((mood.mental_energy + mood.physical_energy) / 2, 1))
+            health = HealthLog.objects.get(user=request.user, date=day)
+            sleep_score = min(42, max(0, 7.5 - health.sleep_hours) * 6)
+            screen_score = min(12, max(0, health.screen_time - 6) * 3)
+            activity_score = 8 if health.steps < 3000 else (-6 if health.steps >= 7000 else 0)
+            if health.water_ml < 1000:
+                hydration_score = 5
+            elif health.water_ml < 1500:
+                hydration_score = 2
+            elif health.water_ml >= 2000:
+                hydration_score = -3
+            else:
+                hydration_score = 0
+        except HealthLog.DoesNotExist:
+            sleep_score = 15
+            screen_score = 0
+            activity_score = 0
+            hydration_score = 0
+
+        try:
+            mood_entry = MoodEntry.objects.get(user=request.user, date=day)
+            mood_data.append(mood_entry.mood)
+            energy_data.append(round((mood_entry.mental_energy + mood_entry.physical_energy) / 2, 1))
+            mood_score = (3 - mood_entry.mood) * 8
+            mental_score = 10 if mood_entry.mental_energy < 40 else (-8 if mood_entry.mental_energy > 70 else 0)
+            physical_score = 6 if mood_entry.physical_energy < 40 else (-4 if mood_entry.physical_energy > 70 else 0)
         except MoodEntry.DoesNotExist:
             mood_data.append(None)
             energy_data.append(None)
+            mood_score = 0
+            mental_score = 0
+            physical_score = 0
 
-        # Burnout — простий розрахунок
-        try:
-            health = HealthLog.objects.get(user=request.user, date=day)
-            sleep_risk = max(0, 8 - health.sleep_hours) * 4
-        except HealthLog.DoesNotExist:
-            sleep_risk = 20  # середнє якщо немає даних
-
-        mood_risk = (5 - mood_data[-1]) * 8 if mood_data[-1] is not None else 24
-        bi = min(100, max(0, round(sleep_risk + mood_risk + workload_data[-1] * 2)))
+        bi = min(100, max(0, round(
+            workload_score + task_pressure +
+            sleep_score + screen_score + activity_score + hydration_score +
+            mood_score + mental_score + physical_score
+        )))
         burnout_data.append(bi)
 
     return JsonResponse({
