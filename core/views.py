@@ -8,6 +8,7 @@ from .models import Task, HealthLog, MoodEntry, Reflection
 from .forms import Task, RegisterForm, MoodForm, HealthLogForm, TaskForm
 from datetime import date, timedelta
 import json
+from .burnout import calculate_burnout, DailyInput
 
 
 def auth_view(request):
@@ -263,16 +264,37 @@ def analytics_data(request):
             mood_data.append(None)
             energy_data.append(None)
 
-        # Burnout — простий розрахунок
+        # Burnout — наукова формула
         try:
             health = HealthLog.objects.get(user=request.user, date=day)
-            sleep_risk = max(0, 8 - health.sleep_hours) * 4
         except HealthLog.DoesNotExist:
-            sleep_risk = 20  # середнє якщо немає даних
+            health = None
 
-        mood_risk = (5 - mood_data[-1]) * 8 if mood_data[-1] else 24
-        bi = min(100, max(0, round(sleep_risk + mood_risk + workload_data[-1] * 2)))
-        burnout_data.append(bi)
+        try:
+            mood_entry = MoodEntry.objects.get(user=request.user, date=day)
+        except MoodEntry.DoesNotExist:
+            mood_entry = None
+
+        tasks_day = Task.objects.filter(user=request.user, date=day)
+        total_hours = sum(t.duration for t in tasks_day) / 60
+        avg_diff = sum(t.difficulty for t in tasks_day) / tasks_day.count() if tasks_day.exists() else 1.0
+        tasks_done = tasks_day.filter(is_completed=True).count()
+
+        bi_input = DailyInput(
+            mood             = mood_entry.mood            if mood_entry else 3.0,
+            mental_energy    = mood_entry.mental_energy   if mood_entry else 5.0,
+            physical_energy  = mood_entry.physical_energy if mood_entry else 5.0,
+            sleep_hours      = health.sleep_hours         if health else 7.0,
+            water_ml         = health.water_ml            if health else 1500,
+            screen_time      = health.screen_time         if health else 4.0,
+            steps            = health.steps               if health else 5000,
+            total_task_hours = total_hours,
+            avg_difficulty   = avg_diff,
+            tasks_total      = tasks_day.count(),
+            tasks_completed  = tasks_done,
+        )
+        result = calculate_burnout(bi_input)
+        burnout_data.append(result.index)
 
     return JsonResponse({
         'labels': labels,

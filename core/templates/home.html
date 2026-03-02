@@ -1787,8 +1787,7 @@
                                         <span class="phys-name">💧 Hydration</span>
                                         <span class="phys-val" id="hydVal">6 glasses</span>
                                     </div>
-                                    <input type="range" class="slider" id="hydSlider" min<input type="range"
-                                        class="slider" id="hydSlider" min="0" max="12" value="6"="0" max="12" value="6"
+                                    <input type="range" class="slider" id="hydSlider" min="0" max="12" value="6"
                                         style="--val:50%" oninput="updatePhys(this,'hydVal',' glasses','hydBar',12)"
                                         onchange="saveHealthData()">
                                     <div class="phys-bar" style="margin-top:8px;">
@@ -2018,6 +2017,8 @@
         // ============================================================
 
         const csrftoken = "{{ csrf_token }}";
+        // Single CSRF source — use csrftoken everywhere
+        const CSRF = csrftoken;
 
         let state = {
             tasks: [],
@@ -2060,19 +2061,6 @@
         // TASKS
         // ============================================================
 
-        function getCookie(name) {
-            let cookieValue = null;
-            if (document.cookie && document.cookie !== '') {
-                document.cookie.split(';').forEach(cookie => {
-                    const c = cookie.trim();
-                    if (c.startsWith(name + '=')) {
-                        cookieValue = decodeURIComponent(c.slice(name.length + 1));
-                    }
-                });
-            }
-            return cookieValue;
-        }
-        const CSRF = getCookie('csrftoken');
         async function quickAddTask() {
             const name = document.getElementById('quickName').value.trim();
             if (!name) { showToast('⚠️', 'Enter a task name'); return; }
@@ -2180,13 +2168,13 @@
 
         function taskItemHTML(t, showTime = true) {
             return `<div class="task-item">
-    <div class="task-check ${t.done ? 'done' : ''}" onclick="toggleTask(${t.id})"></div>
+    <div class="task-check ${t.is_completed ? 'done' : ''}" onclick="toggleTask(${t.id})"></div>
     <div class="task-info">
-      <div class="task-name ${t.done ? 'done' : ''}">${t.name}</div>
+      <div class="task-name ${t.is_completed ? 'done' : ''}">${t.title}</div>
       <div class="task-tags">
         <span class="tag ${t.priority}">${t.priority}</span>
         <span class="tag diff">Difficulty: ${t.difficulty}/5</span>
-        ${showTime ? `<span class="tag diff">${t.time} · ${t.duration}h</span>` : ''}
+        ${showTime ? `<span class="tag diff">${t.start_time ? t.start_time.slice(0,5) : ''} · ${(t.duration/60).toFixed(1)}h</span>` : ''}
       </div>
     </div>
     <button class="task-del" onclick="deleteTask(${t.id})">×</button>
@@ -2267,7 +2255,7 @@
 
         function updatePhys(el, labelId, unit, barId, max) {
             const val = parseInt(el.value);
-            const pct = Math.round(val / max * 100);
+            const pct = Math.round((val / max) * 100);
             el.style.setProperty('--val', pct + '%');
             document.getElementById(labelId).textContent = val + unit;
             document.getElementById(barId).style.width = pct + '%';
@@ -2311,6 +2299,7 @@
                     showToast('✅', 'Mood & reflection saved!');
                 } else {
                     console.error("Помилка від сервера", await response.text());
+                    showToast('❌', 'Failed to save mood. Try again.');
                 }
             } catch (error) {
                 console.error("Помилка мережі:", error);
@@ -2351,50 +2340,35 @@
 
                 if (response.ok) {
                     console.log("Дані здоров'я успішно збережено в базу!");
+                    showToast('✅', 'Health data saved!');
+                    recalcBurnout();
+                } else {
+                    showToast('❌', 'Failed to save health data. Try again.');
                 }
             } catch (error) {
                 console.error("Помилка відправки:", error);
+                showToast('❌', 'Network error. Check your connection.');
             }
         }
 
 
-        function renderMood() {
-            const todayLog = getTodayLog();
-            if (todayLog) {
-                selectMood(todayLog.mood);
-                document.getElementById('mentalSlider').value = todayLog.mental;
-                document.getElementById('mentalVal').textContent = todayLog.mental + '%';
-                document.getElementById('mentalSlider').style.setProperty('--val', todayLog.mental + '%');
-                document.getElementById('physSlider').value = todayLog.physical;
-                document.getElementById('physVal').textContent = todayLog.physical + '%';
-                document.getElementById('physSlider').style.setProperty('--val', todayLog.physical + '%');
-                document.getElementById('sleepSlider').value = todayLog.sleep;
-                document.getElementById('sleepVal').textContent = todayLog.sleep + 'h';
-                document.getElementById('sleepBar').style.width = Math.round(todayLog.sleep / 12 * 100) + '%';
-                document.getElementById('hydSlider').value = todayLog.hydration;
-                document.getElementById('hydVal').textContent = todayLog.hydration + ' glasses';
-                document.getElementById('hydBar').style.width = Math.round(todayLog.hydration / 12 * 100) + '%';
-                document.getElementById('screenSlider').value = todayLog.screenTime;
-                document.getElementById('screenVal').textContent = todayLog.screenTime + 'h';
-                document.getElementById('screenBar').style.width = Math.round(todayLog.screenTime / 16 * 100) + '%';
-                document.getElementById('movSlider').value = todayLog.movement;
-                document.getElementById('movVal').textContent = todayLog.movement + ' min';
-                document.getElementById('movBar').style.width = Math.round(todayLog.movement / 120 * 100) + '%';
-                if (todayLog.reflection) document.getElementById('reflectionText').value = todayLog.reflection;
-            }
+        async function renderMood() {
+            // Sliders already hydrated by loadDjangoData() on init
+            // Week averages — fetch from analytics API
+            try {
+                const res = await fetch('/api/analytics/');
+                const data = await res.json();
+                const moodVals = data.mood.filter(v => v !== null);
+                const energyVals = data.energy.filter(v => v !== null);
+                const avg = arr => arr.length ? (arr.reduce((a, b) => a + b, 0) / arr.length) : null;
+                const avgMood = avg(moodVals);
+                const avgEnergy = avg(energyVals);
+                if (avgMood !== null) document.getElementById('wAvgMood').textContent = avgMood.toFixed(1);
+                if (avgEnergy !== null) document.getElementById('wAvgEnergy').textContent = Math.round(avgEnergy * 10) + '%';
+            } catch (e) { console.error('renderMood analytics error:', e); }
 
-            // Week averages
-            const logs7 = state.moodLogs.slice(-7);
-            if (logs7.length > 0) {
-                const avg = arr => (arr.reduce((a, b) => a + b, 0) / arr.length);
-                document.getElementById('wAvgMood').textContent = avg(logs7.map(l => l.mood)).toFixed(1);
-                document.getElementById('wAvgEnergy').textContent = Math.round(avg(logs7.map(l => l.mental))) + '%';
-                document.getElementById('wAvgSleep').textContent = avg(logs7.map(l => l.sleep)).toFixed(1) + 'h';
-                document.getElementById('wAvgMove').textContent = Math.round(avg(logs7.map(l => l.movement))) + 'm';
-            }
-
-            // AI Insights
-            renderAIInsights(todayLog);
+            // AI Insights from backend
+            await loadInsights();
         }
 
         function renderAIInsights(log) {
@@ -2419,50 +2393,58 @@
         // ============================================================
         // ANALYTICS
         // ============================================================
-        function renderAnalytics() {
-            const bi = calcBurnoutIndex();
-            document.getElementById('aCurrentIdx').textContent = bi;
-            document.getElementById('gaugeNum').textContent = bi;
-            const status = burnoutStatus(bi);
-            document.getElementById('gaugeStatus').textContent = status;
+        async function renderAnalytics() {
+            try {
+                const res = await fetch('/api/analytics/');
+                const data = await res.json();
 
-            const gaugeOffset = 314 - (bi / 100) * 314;
-            document.getElementById('gaugeCircle').style.strokeDashoffset = gaugeOffset;
+                // Today's burnout = last element
+                const bi = Math.round(data.burnout[data.burnout.length - 1] || 0);
+                document.getElementById('aCurrentIdx').textContent = bi;
+                document.getElementById('gaugeNum').textContent = bi;
+                const status = burnoutStatus(bi);
+                document.getElementById('gaugeStatus').textContent = status;
+                const gaugeOffset = 314 - (bi / 100) * 314;
+                document.getElementById('gaugeCircle').style.strokeDashoffset = gaugeOffset;
 
-            const burnoutDescriptions = {
-                Low: 'Your burnout level is low. Keep maintaining healthy habits!',
-                Moderate: 'Your burnout level is moderate. Balance your workload and rest regularly.',
-                High: 'Burnout level is high. Prioritize rest, reduce workload, and seek support.',
-                Critical: 'Critical burnout! Please take immediate action: rest, delegate tasks, and consider professional help.'
-            };
-            document.getElementById('burnoutDescription').textContent = burnoutDescriptions[status] || '';
+                const burnoutDescriptions = {
+                    Low: 'Your burnout level is low. Keep maintaining healthy habits!',
+                    Moderate: 'Your burnout level is moderate. Balance your workload and rest regularly.',
+                    High: 'Burnout level is high. Prioritize rest, reduce workload, and seek support.',
+                    Critical: 'Critical burnout! Please take immediate action: rest, delegate tasks, and consider professional help.'
+                };
+                document.getElementById('burnoutDescription').textContent = burnoutDescriptions[status] || '';
 
-            const logs7 = state.moodLogs.slice(-7);
-            if (logs7.length > 0) {
-                const avg = arr => (arr.reduce((a, b) => a + b, 0) / arr.length);
-                document.getElementById('aAvgMood').textContent = avg(logs7.map(l => l.mood)).toFixed(1);
-                document.getElementById('aEnergyLvl').textContent = Math.round(avg(logs7.map(l => l.mental))) + '%';
-            } else {
-                document.getElementById('aAvgMood').textContent = '—';
-                document.getElementById('aEnergyLvl').textContent = '—';
+                // Week averages from API
+                const moodVals = data.mood.filter(v => v !== null);
+                const energyVals = data.energy.filter(v => v !== null);
+                const avg = arr => arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : null;
+                const avgMood = avg(moodVals);
+                const avgEnergy = avg(energyVals);
+                document.getElementById('aAvgMood').textContent = avgMood !== null ? avgMood.toFixed(1) : '—';
+                document.getElementById('aEnergyLvl').textContent = avgEnergy !== null ? Math.round(avgEnergy * 10) + '%' : '—';
+
+                // This Week workload
+                const totalH = data.workload.reduce((a, b) => a + (b || 0), 0);
+                document.getElementById('aWorkload').textContent = totalH > 0 ? `${totalH.toFixed(0)}h` : '—';
+                if (totalH >= 40) document.getElementById('aWorkloadH').textContent = 'Heavy this week';
+                else if (totalH >= 20) document.getElementById('aWorkloadH').textContent = 'Moderate this week';
+                else document.getElementById('aWorkloadH').textContent = 'Light this week';
+
+                renderCharts(data);
+            } catch (e) {
+                console.error('renderAnalytics error:', e);
             }
-
-            const weekTasks = getWeekTasks();
-            const totalH = weekTasks.reduce((a, t) => a + t.duration, 0);
-            document.getElementById('aWorkload').textContent = totalH > 0 ? `${totalH.toFixed(0)}h` : '—';
-            if (totalH >= 40) document.getElementById('aWorkloadH').textContent = 'Heavy this week';
-            else if (totalH >= 20) document.getElementById('aWorkloadH').textContent = 'Moderate this week';
-            else document.getElementById('aWorkloadH').textContent = 'Light this week';
-
-            renderCharts();
         }
 
         let chartInstances = {};
-        async function renderCharts() {
+        async function renderCharts(data) {
             Object.values(chartInstances).forEach(c => c && typeof c.destroy === 'function' && c.destroy());
 
-            const res = await fetch('/api/analytics/');
-            const data = await res.json();
+            if (!data) {
+                const res = await fetch('/api/analytics/');
+                data = await res.json();
+            }
 
             chartInstances.burnout = drawBarChart('burnoutChart', data.labels, data.burnout, '#e8327c', 100);
             chartInstances.workload = drawBarChart('workloadChart', data.labels, data.workload, '#c026d3', 12);
@@ -2565,39 +2547,6 @@
             return { destroy: () => { } };
         }
 
-        async function saveHealthData() {
-            const sleep = parseFloat(document.getElementById('sleepSlider').value) || 0;
-            const glassesOfWater = parseInt(document.getElementById('hydSlider').value) || 0;
-            const screenTime = parseFloat(document.getElementById('screenSlider').value) || 0;
-            const movementMinutes = parseInt(document.getElementById('movSlider').value) || 0;
-
-            const data = {
-                sleep_hours: sleep,
-                water_ml: glassesOfWater * 250,
-                screen_time: screenTime,
-                steps: movementMinutes * 100
-            };
-
-            try {
-                const response = await fetch('/api/health/update/', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': csrftoken
-                    },
-                    body: JSON.stringify(data)
-                });
-
-                if (response.ok) {
-                    console.log("Дані здоров'я успішно збережено в базу!");
-                }
-            } catch (error) {
-                console.error("Помилка відправки:", error);
-            }
-        }
-
-
-
         // ============================================================
         // BURNOUT CALC
         // ============================================================
@@ -2662,16 +2611,23 @@
             return state.moodLogs.find(l => l.date === todayStr()) || null;
         }
 
-        function recalcBurnout() {
-            const bi = calcBurnoutIndex();
-            const circumference = 264;
-            const offset = circumference - (bi / 100) * circumference;
-            const ring = document.getElementById('burnoutRing');
-            if (ring) ring.style.strokeDashoffset = offset;
-            const num = document.getElementById('burnoutNum');
-            if (num) num.textContent = bi;
-            const badge = document.getElementById('burnoutStatusBadge');
-            if (badge) badge.textContent = burnoutStatus(bi);
+        async function recalcBurnout() {
+            try {
+                const res = await fetch('/api/analytics/');
+                const data = await res.json();
+                // Last value is today (index 6)
+                const bi = Math.round(data.burnout[data.burnout.length - 1] || 0);
+                const circumference = 264;
+                const offset = circumference - (bi / 100) * circumference;
+                const ring = document.getElementById('burnoutRing');
+                if (ring) ring.style.strokeDashoffset = offset;
+                const num = document.getElementById('burnoutNum');
+                if (num) num.textContent = bi;
+                const badge = document.getElementById('burnoutStatusBadge');
+                if (badge) badge.textContent = burnoutStatus(bi);
+            } catch (e) {
+                console.error('recalcBurnout error:', e);
+            }
         }
 
         // ============================================================
@@ -2737,17 +2693,9 @@
         function init() {
             loadUser();
             loadState();
-
             loadDjangoData();
-
             document.getElementById('plannerDatePicker').value = todayStr();
-            setTimeout(() => {
-                const bi = calcBurnoutIndex();
-                const offset = 264 - (bi / 100) * 264;
-                document.getElementById('burnoutRing').style.strokeDashoffset = offset;
-                document.getElementById('burnoutNum').textContent = bi;
-                document.getElementById('burnoutStatusBadge').textContent = burnoutStatus(bi);
-            }, 200);
+            recalcBurnout();
             renderDashboard();
             loadInsights();
 
