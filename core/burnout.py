@@ -14,8 +14,8 @@ from typing import Optional
 @dataclass
 class DailyInput:
     mood:             float  # 1-5
-    mental_energy:    float  # 1-10
-    physical_energy:  float  # 1-10
+    mental_energy:    float  # 0-100
+    physical_energy:  float  # 0-100
     sleep_hours:      float
     water_ml:         int    # мілілітри
     screen_time:      float  # години
@@ -41,8 +41,8 @@ def calculate_burnout(data: DailyInput) -> BurnoutResult:
     # Настрій (макс 32)
     mood_risk = (5.0 - data.mood) * 8.0
 
-    # Ментальна енергія 1-10 → нормалізуємо до 0-100
-    mental_pct = (data.mental_energy - 1) / 9 * 100
+    # Ментальна енергія 0-100
+    mental_pct = max(0.0, min(100.0, data.mental_energy))
     mental_risk = (100.0 - mental_pct) * 0.20
 
     # Сон (макс 32)
@@ -64,8 +64,8 @@ def calculate_burnout(data: DailyInput) -> BurnoutResult:
 
     # ── ЗАХИСНІ ФАКТОРИ ──
 
-    # Фізична енергія 1-10 → нормалізуємо до 0-100
-    physical_pct = (data.physical_energy - 1) / 9 * 100
+    # Фізична енергія 0-100
+    physical_pct = max(0.0, min(100.0, data.physical_energy))
     phys_protection = (physical_pct / 100.0) * 10.0
 
     # Кроки (макс 6)

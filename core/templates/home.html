@@ -1079,36 +1079,6 @@
             margin-top: 2px;
         }
 
-        /* AI Insights */
-        .insight-card {
-            background: linear-gradient(135deg, rgba(192, 38, 211, 0.1), rgba(232, 50, 124, 0.08));
-            border: 1px solid rgba(192, 38, 211, 0.2);
-            border-radius: 14px;
-            padding: 16px;
-        }
-
-        .insight-title {
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--accent2);
-            margin-bottom: 12px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .insight-item {
-            font-size: 13px;
-            color: var(--text2);
-            margin-bottom: 8px;
-            display: flex;
-            gap: 8px;
-            line-height: 1.5;
-        }
-
-        .insight-item:last-child {
-            margin-bottom: 0;
-        }
 
         /* ANALYTICS */
         .analytics-stats {
@@ -1548,25 +1518,83 @@
                     <div class="card">
                         <div class="card-title">Today's Status</div>
                         <div class="status-rows">
+
                             <div class="status-row">
                                 <label>Mood</label>
-                                <div class="dots" id="moodDots">
-                                    <div class="dot filled"></div>
-                                    <div class="dot filled"></div>
-                                    <div class="dot filled"></div>
-                                    <div class="dot"></div>
-                                    <div class="dot"></div>
+                                <div style="display:flex;align-items:center;gap:8px;">
+                                    <div class="dots" id="moodDots">
+                                        <div class="dot"></div><div class="dot"></div>
+                                        <div class="dot"></div><div class="dot"></div>
+                                        <div class="dot"></div>
+                                    </div>
+                                    <span id="moodEmoji" style="font-size:16px;"></span>
                                 </div>
                             </div>
+
                             <div class="status-row">
-                                <label>Energy</label>
-                                <div class="dots" id="energyDots">
-                                    <div class="dot filled"></div>
-                                    <div class="dot filled"></div>
-                                    <div class="dot filled"></div>
-                                    <div class="dot"></div>
-                                    <div class="dot"></div>
+                                <label>Mental Energy</label>
+                                <div style="display:flex;align-items:center;gap:8px;">
+                                    <div style="width:80px;height:5px;border-radius:3px;
+                                                background:var(--surface3);overflow:hidden;">
+                                        <div id="mentalBar"
+                                            style="height:100%;border-radius:3px;width:0%;
+                                                    background:linear-gradient(90deg,var(--accent),var(--accent2));
+                                                    transition:width 0.6s ease;"></div>
+                                    </div>
+                                    <span id="mentalPct"
+                                        style="font-size:11px;color:var(--text3);min-width:28px;">—</span>
                                 </div>
+                            </div>
+
+                            <div class="status-row">
+                                <label>Physical Energy</label>
+                                <div style="display:flex;align-items:center;gap:8px;">
+                                    <div style="width:80px;height:5px;border-radius:3px;
+                                                background:var(--surface3);overflow:hidden;">
+                                        <div id="physicalBar"
+                                            style="height:100%;border-radius:3px;width:0%;
+                                                    background:linear-gradient(90deg,#34d399,#059669);
+                                                    transition:width 0.6s ease;"></div>
+                                    </div>
+                                    <span id="physicalPct"
+                                        style="font-size:11px;color:var(--text3);min-width:28px;">—</span>
+                                </div>
+                            </div>
+
+                            <div class="status-row">
+                                <label>Sleep</label>
+                                <div style="display:flex;align-items:center;gap:8px;">
+                                    <div style="width:80px;height:5px;border-radius:3px;
+                                                background:var(--surface3);overflow:hidden;">
+                                        <div id="sleepBarStatus"
+                                            style="height:100%;border-radius:3px;width:0%;
+                                                    background:linear-gradient(90deg,#6366f1,#8b5cf6);
+                                                    transition:width 0.6s ease;"></div>
+                                    </div>
+                                    <span id="sleepValStatus"
+                                        style="font-size:11px;color:var(--text3);min-width:28px;">—</span>
+                                </div>
+                            </div>
+
+                            <div class="status-row">
+                                <label>Movement</label>
+                                <div style="display:flex;align-items:center;gap:8px;">
+                                    <div style="width:80px;height:5px;border-radius:3px;
+                                                background:var(--surface3);overflow:hidden;">
+                                        <div id="stepsBarStatus"
+                                            style="height:100%;border-radius:3px;width:0%;
+                                                    background:linear-gradient(90deg,#f59e0b,#d97706);
+                                                    transition:width 0.6s ease;"></div>
+                                    </div>
+                                    <span id="stepsValStatus"
+                                        style="font-size:11px;color:var(--text3);min-width:36px;">—</span>
+                                </div>
+                            </div>
+
+                            <div id="statusNotLogged"
+                                style="font-size:11px;color:var(--text3);margin-top:6px;display:none;">
+                                <a onclick="showPage('mood')"
+                                style="color:var(--accent);cursor:pointer;">Log today's check-in →</a>
                             </div>
                         </div>
                     </div>
@@ -1846,12 +1874,6 @@
                                     <div class="week-stat-lbl">Avg. Movement</div>
                                 </div>
                             </div>
-                        </div>
-
-                        <!-- AI Insights -->
-                        <div class="insight-card" id="aiInsights">
-                            <div class="insight-title">🤖 AI Insights</div>
-                            <div class="insight-item">💡 Save your first check-in to get personalized insights!</div>
                         </div>
                     </div>
                 </div>
@@ -2176,6 +2198,19 @@
                 <button class="task-del" onclick="deleteTask(${t.id})">×</button>
             </div>`).join('');
             }
+
+            // Weekly stats + Today's Status
+            try {
+                const statsRes = await fetch('/api/weekly-stats/');
+                const stats = await statsRes.json();
+                document.getElementById('weekTasks').textContent = `${stats.tasks_completed}/${stats.tasks_total}`;
+                document.getElementById('weekEnergy').textContent =
+                    stats.avg_mental_energy != null ? Math.round(stats.avg_mental_energy) + '%' : '—';
+                document.getElementById('weekReflections').textContent = `${stats.reflection_days}/7`;
+                renderTodayStatus(stats.today_mood, stats.today_health);
+            } catch(e) {
+                console.error('Dashboard stats error:', e);
+            }
         }
 
         function taskItemHTML(t, showTime = true) {
@@ -2196,6 +2231,50 @@
         function renderDots(id, val) {
             const el = document.getElementById(id);
             el.innerHTML = [1, 2, 3, 4, 5].map(i => `<div class="dot ${i <= val ? 'filled' : ''}"></div>`).join('');
+        }
+
+        const moodEmojis = { 1: '😞', 2: '😕', 3: '😐', 4: '🙂', 5: '😄' };
+
+        function renderTodayStatus(moodData, healthData) {
+            const notLogged = document.getElementById('statusNotLogged');
+
+            if (moodData) {
+                renderDots('moodDots', moodData.mood);
+
+                const emojiEl = document.getElementById('moodEmoji');
+                if (emojiEl) emojiEl.textContent = moodEmojis[moodData.mood] || '';
+
+                const mentalBar = document.getElementById('mentalBar');
+                const mentalPct = document.getElementById('mentalPct');
+                if (mentalBar) mentalBar.style.width = moodData.mental_energy + '%';
+                if (mentalPct) mentalPct.textContent = moodData.mental_energy + '%';
+
+                const physBar = document.getElementById('physicalBar');
+                const physPct = document.getElementById('physicalPct');
+                if (physBar) physBar.style.width = moodData.physical_energy + '%';
+                if (physPct) physPct.textContent = moodData.physical_energy + '%';
+            }
+
+            if (healthData) {
+                const sleepBar = document.getElementById('sleepBarStatus');
+                const sleepVal = document.getElementById('sleepValStatus');
+                if (sleepBar) sleepBar.style.width = Math.min(100, healthData.sleep_hours / 12 * 100) + '%';
+                if (sleepVal) sleepVal.textContent = healthData.sleep_hours + 'h';
+
+                const stepsBar = document.getElementById('stepsBarStatus');
+                const stepsVal = document.getElementById('stepsValStatus');
+                if (stepsBar) stepsBar.style.width = Math.min(100, healthData.steps / 10000 * 100) + '%';
+                if (stepsVal) {
+                    stepsVal.textContent = healthData.steps >= 1000
+                        ? (healthData.steps / 1000).toFixed(1) + 'k'
+                        : String(healthData.steps);
+                }
+            }
+
+            // Показати підказку якщо щось не заповнено
+            if (notLogged) {
+                notLogged.style.display = (!moodData || !healthData) ? 'block' : 'none';
+            }
         }
 
         function updateSmartAlert(bi, tasks) {
@@ -2308,6 +2387,7 @@
                     }
 
                     await loadInsights();
+                    recalcBurnout();
                     showToast('✅', 'Mood & reflection saved!');
                 } else {
                     console.error("Помилка від сервера", await response.text());
@@ -2317,12 +2397,30 @@
             }
         }
 
+        const insightColors = {
+            good:     { bg: 'rgba(52,211,153,0.08)',  border: 'rgba(52,211,153,0.25)' },
+            warning:  { bg: 'rgba(245,158,11,0.08)',  border: 'rgba(245,158,11,0.25)' },
+            critical: { bg: 'rgba(232,50,124,0.10)',  border: 'rgba(232,50,124,0.30)' },
+            info:     { bg: 'rgba(192,38,211,0.08)',  border: 'rgba(192,38,211,0.2)'  },
+        };
+
+        function renderInsightItem(ins) {
+            const c = insightColors[ins.level] || insightColors.info;
+            return `<div style="display:flex;gap:10px;align-items:flex-start;
+                        padding:10px 12px;border-radius:10px;margin-bottom:8px;
+                        background:${c.bg};border:1px solid ${c.border};">
+                <span style="font-size:18px;flex-shrink:0;">${ins.icon}</span>
+                <span style="font-size:13px;color:var(--text2);line-height:1.5;">${ins.text}</span>
+            </div>`;
+        }
+
         async function loadInsights() {
             const res = await fetch('/api/insights/');
             const data = await res.json();
-            const el = document.getElementById('smartAlert');
-            if (el && data.insights.length > 0) {
-                el.innerHTML = data.insights.map(i => `<div style="margin-bottom:6px;">${i}</div>`).join('');
+
+            const alertEl = document.getElementById('smartAlert');
+            if (alertEl && data.insights.length > 0) {
+                alertEl.innerHTML = data.insights.slice(0, 3).map(renderInsightItem).join('');
             }
         }
 
@@ -2351,6 +2449,7 @@
 
                 if (response.ok) {
                     console.log("Дані здоров'я успішно збережено в базу!");
+                    recalcBurnout();
                 }
             } catch (error) {
                 console.error("Помилка відправки:", error);
@@ -2392,37 +2491,23 @@
                 document.getElementById('wAvgSleep').textContent = avg(logs7.map(l => l.sleep)).toFixed(1) + 'h';
                 document.getElementById('wAvgMove').textContent = Math.round(avg(logs7.map(l => l.movement))) + 'm';
             }
-
-            // AI Insights
-            renderAIInsights(todayLog);
-        }
-
-        function renderAIInsights(log) {
-            if (!log) return;
-            const insights = [];
-            if (log.sleep >= 7) insights.push('✅ Great sleep duration! Keep it up.');
-            else if (log.sleep < 6) insights.push('😴 Sleep is below optimal. Try to get 7-8 hours.');
-            if (log.screenTime > 8) insights.push('⚠️ Screen time is high. Consider a digital detox.');
-            else if (log.screenTime <= 4) insights.push('✅ Good screen time balance!');
-            if (log.hydration < 6) insights.push(`💧 Try to increase water intake by ${8 - log.hydration} more glasses.`);
-            else insights.push('💧 Great hydration today!');
-            if (log.movement < 20) insights.push('🏃 Try to move more — even a 20-min walk helps.');
-            else insights.push(`🏃 Good movement today (${log.movement} min)!`);
-
-            document.getElementById('aiInsights').innerHTML = `
-    <div class="insight-title">🤖 AI Insights</div>
-    <div>Based on your inputs:</div>
-    ${insights.map(i => `<div class="insight-item">${i}</div>`).join('')}
-  `;
         }
 
         // ============================================================
         // ANALYTICS
         // ============================================================
-        function renderAnalytics() {
-            const bi = calcBurnoutIndex();
-            document.getElementById('aCurrentIdx').textContent = bi;
-            document.getElementById('gaugeNum').textContent = bi;
+        async function renderAnalytics() {
+            // Fetch burnout and analytics data from server
+            const [burnoutRes, analyticsRes] = await Promise.all([
+                fetch('/api/burnout/'),
+                fetch('/api/analytics/')
+            ]);
+            const burnoutData = await burnoutRes.json();
+            const analyticsData = await analyticsRes.json();
+
+            const bi = burnoutData.index;
+            document.getElementById('aCurrentIdx').textContent = Math.round(bi);
+            document.getElementById('gaugeNum').textContent = Math.round(bi);
             const status = burnoutStatus(bi);
             document.getElementById('gaugeStatus').textContent = status;
 
@@ -2437,36 +2522,75 @@
             };
             document.getElementById('burnoutDescription').textContent = burnoutDescriptions[status] || '';
 
-            const logs7 = state.moodLogs.slice(-7);
-            if (logs7.length > 0) {
-                const avg = arr => (arr.reduce((a, b) => a + b, 0) / arr.length);
-                document.getElementById('aAvgMood').textContent = avg(logs7.map(l => l.mood)).toFixed(1);
-                document.getElementById('aEnergyLvl').textContent = Math.round(avg(logs7.map(l => l.mental))) + '%';
+            // Use analytics data for mood/energy stats
+            const moodVals = analyticsData.mood.filter(v => v !== null);
+            const energyVals = analyticsData.energy.filter(v => v !== null);
+            if (moodVals.length > 0) {
+                const avg = arr => arr.reduce((a, b) => a + b, 0) / arr.length;
+                document.getElementById('aAvgMood').textContent = avg(moodVals).toFixed(1);
+                document.getElementById('aEnergyLvl').textContent = Math.round(avg(energyVals)) + '%';
             } else {
                 document.getElementById('aAvgMood').textContent = '—';
                 document.getElementById('aEnergyLvl').textContent = '—';
             }
 
-            const weekTasks = getWeekTasks();
-            const totalH = weekTasks.reduce((a, t) => a + t.duration, 0);
+            const totalH = analyticsData.workload.reduce((a, b) => a + b, 0);
             document.getElementById('aWorkload').textContent = totalH > 0 ? `${totalH.toFixed(0)}h` : '—';
             if (totalH >= 40) document.getElementById('aWorkloadH').textContent = 'Heavy this week';
             else if (totalH >= 20) document.getElementById('aWorkloadH').textContent = 'Moderate this week';
             else document.getElementById('aWorkloadH').textContent = 'Light this week';
 
-            renderCharts();
+            renderChartsWithData(analyticsData);
+
+            // Динамічні alerts на основі реальних даних
+            try {
+                const statsRes = await fetch('/api/weekly-stats/');
+                const stats = await statsRes.json();
+                const alertsEl = document.getElementById('analyticsAlerts');
+                if (alertsEl) {
+                    let positiveMsg = 'Keep logging daily to build a clear picture of your patterns.';
+                    let warningMsg  = 'Consistent tracking helps you spot burnout before it hits.';
+
+                    if (stats.avg_sleep >= 7)
+                        positiveMsg = `Avg. sleep this week: ${stats.avg_sleep}h — above the burnout risk threshold. Great habit.`;
+                    else if (stats.avg_mood >= 4)
+                        positiveMsg = `Average mood this week: ${stats.avg_mood}/5 — you're doing well emotionally.`;
+                    else if (bi < 30)
+                        positiveMsg = 'Burnout index is low — your current habits are protecting you this week.';
+
+                    if (stats.avg_sleep != null && stats.avg_sleep < 6)
+                        warningMsg = `Avg. sleep only ${stats.avg_sleep}h this week — sleep debt is your biggest burnout risk right now.`;
+                    else if (bi >= 70)
+                        warningMsg = 'Burnout index is critical. Reduce workload, improve sleep, and add daily movement.';
+                    else if (stats.avg_mood != null && stats.avg_mood < 3)
+                        warningMsg = `Average mood below neutral (${stats.avg_mood}/5) this week. Review your workload and rest schedule.`;
+
+                    alertsEl.innerHTML = `
+                        <div class="alert-box positive">
+                            <div class="alert-box-title">✅ Positive</div>
+                            <div class="alert-box-text">${positiveMsg}</div>
+                        </div>
+                        <div class="alert-box warning">
+                            <div class="alert-box-title">⚠️ Watch Out</div>
+                            <div class="alert-box-text">${warningMsg}</div>
+                        </div>`;
+                }
+            } catch(e) { console.error('Analytics alerts error:', e); }
         }
 
         let chartInstances = {};
-        async function renderCharts() {
+        function renderChartsWithData(data) {
             Object.values(chartInstances).forEach(c => c && typeof c.destroy === 'function' && c.destroy());
-
-            const res = await fetch('/api/analytics/');
-            const data = await res.json();
 
             chartInstances.burnout = drawBarChart('burnoutChart', data.labels, data.burnout, '#e8327c', 100);
             chartInstances.workload = drawBarChart('workloadChart', data.labels, data.workload, '#c026d3', 12);
             chartInstances.mood = drawLineChart('moodChart', data.labels, data.mood, data.energy);
+        }
+
+        async function renderCharts() {
+            const res = await fetch('/api/analytics/');
+            const data = await res.json();
+            renderChartsWithData(data);
         }
 
         function drawBarChart(canvasId, labels, data, color, max) {
@@ -2565,37 +2689,6 @@
             return { destroy: () => { } };
         }
 
-        async function saveHealthData() {
-            const sleep = parseFloat(document.getElementById('sleepSlider').value) || 0;
-            const glassesOfWater = parseInt(document.getElementById('hydSlider').value) || 0;
-            const screenTime = parseFloat(document.getElementById('screenSlider').value) || 0;
-            const movementMinutes = parseInt(document.getElementById('movSlider').value) || 0;
-
-            const data = {
-                sleep_hours: sleep,
-                water_ml: glassesOfWater * 250,
-                screen_time: screenTime,
-                steps: movementMinutes * 100
-            };
-
-            try {
-                const response = await fetch('/api/health/update/', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': csrftoken
-                    },
-                    body: JSON.stringify(data)
-                });
-
-                if (response.ok) {
-                    console.log("Дані здоров'я успішно збережено в базу!");
-                }
-            } catch (error) {
-                console.error("Помилка відправки:", error);
-            }
-        }
-
 
 
         // ============================================================
@@ -2662,14 +2755,16 @@
             return state.moodLogs.find(l => l.date === todayStr()) || null;
         }
 
-        function recalcBurnout() {
-            const bi = calcBurnoutIndex();
+        async function recalcBurnout() {
+            const res = await fetch('/api/burnout/');
+            const data = await res.json();
+            const bi = data.index;
             const circumference = 264;
             const offset = circumference - (bi / 100) * circumference;
             const ring = document.getElementById('burnoutRing');
             if (ring) ring.style.strokeDashoffset = offset;
             const num = document.getElementById('burnoutNum');
-            if (num) num.textContent = bi;
+            if (num) num.textContent = Math.round(bi);
             const badge = document.getElementById('burnoutStatusBadge');
             if (badge) badge.textContent = burnoutStatus(bi);
         }
@@ -2742,10 +2837,10 @@
 
             document.getElementById('plannerDatePicker').value = todayStr();
             setTimeout(() => {
-                const bi = calcBurnoutIndex();
+                const bi = {{ burnout_index|default:"34.7" }};
                 const offset = 264 - (bi / 100) * 264;
                 document.getElementById('burnoutRing').style.strokeDashoffset = offset;
-                document.getElementById('burnoutNum').textContent = bi;
+                document.getElementById('burnoutNum').textContent = Math.round(bi);
                 document.getElementById('burnoutStatusBadge').textContent = burnoutStatus(bi);
             }, 200);
             renderDashboard();
