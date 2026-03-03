@@ -2123,11 +2123,12 @@
             const title = document.getElementById('taskName').value.trim();
             const date = document.getElementById('taskDate').value || todayStr();
             const start_time = document.getElementById('taskTime').value;
-            const duration = parseInt(document.getElementById('taskDuration').value) * 60;
+            const durationHours = parseFloat(document.getElementById('taskDuration').value) || 1;
+            const duration = Math.round(durationHours * 60);
             const priority = document.getElementById('taskPriority').value;
             const difficulty = parseInt(document.getElementById('taskDifficulty').value);
 
-            if (!title || !date || !start_time) return;
+            if (!title || !start_time) { showToast('⚠️', 'Fill in task name and time'); return; }
 
             const res = await fetch('/api/tasks/add/', {
                 method: 'POST',
@@ -2137,6 +2138,11 @@
             const data = await res.json();
             if (data.status === 'ok') {
                 closeModal('task');
+                // Очистити поля
+                document.getElementById('taskName').value = '';
+                document.getElementById('taskTime').value = '';
+                document.getElementById('taskDuration').value = '';
+                showToast('✅', 'Task added!');
                 renderPlanner();
                 await renderDashboard();
             }
@@ -2457,41 +2463,47 @@
         }
 
 
-        function renderMood() {
-            const todayLog = getTodayLog();
-            if (todayLog) {
-                selectMood(todayLog.mood);
-                document.getElementById('mentalSlider').value = todayLog.mental;
-                document.getElementById('mentalVal').textContent = todayLog.mental + '%';
-                document.getElementById('mentalSlider').style.setProperty('--val', todayLog.mental + '%');
-                document.getElementById('physSlider').value = todayLog.physical;
-                document.getElementById('physVal').textContent = todayLog.physical + '%';
-                document.getElementById('physSlider').style.setProperty('--val', todayLog.physical + '%');
-                document.getElementById('sleepSlider').value = todayLog.sleep;
-                document.getElementById('sleepVal').textContent = todayLog.sleep + 'h';
-                document.getElementById('sleepBar').style.width = Math.round(todayLog.sleep / 12 * 100) + '%';
-                document.getElementById('hydSlider').value = todayLog.hydration;
-                document.getElementById('hydVal').textContent = todayLog.hydration + ' glasses';
-                document.getElementById('hydBar').style.width = Math.round(todayLog.hydration / 12 * 100) + '%';
-                document.getElementById('screenSlider').value = todayLog.screenTime;
-                document.getElementById('screenVal').textContent = todayLog.screenTime + 'h';
-                document.getElementById('screenBar').style.width = Math.round(todayLog.screenTime / 16 * 100) + '%';
-                document.getElementById('movSlider').value = todayLog.movement;
-                document.getElementById('movVal').textContent = todayLog.movement + ' min';
-                document.getElementById('movBar').style.width = Math.round(todayLog.movement / 120 * 100) + '%';
-                if (todayLog.reflection) document.getElementById('reflectionText').value = todayLog.reflection;
-            }
-
-            // Week averages
-            const logs7 = state.moodLogs.slice(-7);
-            if (logs7.length > 0) {
-                const avg = arr => (arr.reduce((a, b) => a + b, 0) / arr.length);
-                document.getElementById('wAvgMood').textContent = avg(logs7.map(l => l.mood)).toFixed(1);
-                document.getElementById('wAvgEnergy').textContent = Math.round(avg(logs7.map(l => l.mental))) + '%';
-                document.getElementById('wAvgSleep').textContent = avg(logs7.map(l => l.sleep)).toFixed(1) + 'h';
-                document.getElementById('wAvgMove').textContent = Math.round(avg(logs7.map(l => l.movement))) + 'm';
-            }
+        async function renderMood() {
+        const todayLog = getTodayLog();
+        if (todayLog) {
+            selectMood(todayLog.mood);
+            document.getElementById('mentalSlider').value = todayLog.mental;
+            document.getElementById('mentalVal').textContent = todayLog.mental + '%';
+            document.getElementById('mentalSlider').style.setProperty('--val', todayLog.mental + '%');
+            document.getElementById('physSlider').value = todayLog.physical;
+            document.getElementById('physVal').textContent = todayLog.physical + '%';
+            document.getElementById('physSlider').style.setProperty('--val', todayLog.physical + '%');
+            document.getElementById('sleepSlider').value = todayLog.sleep;
+            document.getElementById('sleepVal').textContent = todayLog.sleep + 'h';
+            document.getElementById('sleepBar').style.width = Math.round(todayLog.sleep / 12 * 100) + '%';
+            document.getElementById('hydSlider').value = todayLog.hydration;
+            document.getElementById('hydVal').textContent = todayLog.hydration + ' glasses';
+            document.getElementById('hydBar').style.width = Math.round(todayLog.hydration / 12 * 100) + '%';
+            document.getElementById('screenSlider').value = todayLog.screenTime;
+            document.getElementById('screenVal').textContent = todayLog.screenTime + 'h';
+            document.getElementById('screenBar').style.width = Math.round(todayLog.screenTime / 16 * 100) + '%';
+            document.getElementById('movSlider').value = todayLog.movement;
+            document.getElementById('movVal').textContent = todayLog.movement + ' min';
+            document.getElementById('movBar').style.width = Math.round(todayLog.movement / 120 * 100) + '%';
+            if (todayLog.reflection) document.getElementById('reflectionText').value = todayLog.reflection;
         }
+
+        // ← ФІКС: беремо тижневі дані з API
+        try {
+            const res = await fetch('/api/weekly-stats/');
+            const data = await res.json();
+
+            document.getElementById('wAvgMood').textContent = data.avg_mood ?? '—';
+            document.getElementById('wAvgEnergy').textContent = data.avg_mental_energy !== null ? Math.round(data.avg_mental_energy) + '%' : '—';
+            document.getElementById('wAvgSleep').textContent = data.avg_sleep !== null ? data.avg_sleep + 'h' : '—';
+            document.getElementById('wAvgMove').textContent = data.avg_movement !== null ? Math.round(data.avg_movement) + 'm' : '—';
+
+        } catch(e) {
+            console.error('Weekly stats error:', e);
+        }
+
+        renderAIInsights(getTodayLog());
+    }
 
         // ============================================================
         // ANALYTICS

@@ -321,6 +321,8 @@ def analytics_data(request):
     workload_data = []
     mood_data = []
     energy_data = []
+    sleep_data = []
+    movement_data = []
 
     for i in range(6, -1, -1):
         day = today - timedelta(days=i)
@@ -351,6 +353,14 @@ def analytics_data(request):
         except MoodEntry.DoesNotExist:
             mood_entry = None
 
+        try:
+            health = HealthLog.objects.get(user=request.user, date=day)
+            sleep_data.append(float(health.sleep_hours))
+            movement_data.append(round(health.steps / 100))  # назад в хвилини
+        except HealthLog.DoesNotExist:
+            sleep_data.append(None)
+            movement_data.append(None)
+
         tasks_day = Task.objects.filter(user=request.user, date=day)
         total_hours = sum(t.duration for t in tasks_day) / 60
         avg_diff = sum(t.difficulty for t in tasks_day) / tasks_day.count() if tasks_day.exists() else 1.0
@@ -378,6 +388,8 @@ def analytics_data(request):
         'workload': workload_data,
         'mood': mood_data,
         'energy': energy_data,
+        'sleep': sleep_data,
+        'movement': movement_data,
     })
 
 @login_required
